@@ -19,9 +19,19 @@ Tedarikçi → Sabit tank → Mobil tanker → Araç/makine
 - Yakıt hareketleri silinmez. `change_fuelmovement` yetkisi olan kullanıcı, gerekçe yazarak hareketi iptal eder.
 - Hatalı bir hareket **Düzelt** işlemiyle değiştirildiğinde eski kayıt denetim izi olarak kapanır ve yeni hareket eski kayda bağlanır. İki adım tek transaction içinde uygulanır.
 - İptal edilen hareket stok ve rapor hesaplarından çıkar; kullanıcı, zaman ve gerekçe bilgisiyle hareket defterinde kalır.
-- İptal sonucunda bir tank veya tanker stoğu eksiye düşecekse işlem reddedilir.
+- İptal, yakıtın geri döndüğü tank veya tankerin kapasitesini aşacaksa reddedilir. Stok eksiye düşecekse iptal kaydedilir ve kullanıcı eksi stok uyarısı görür.
 - Fiziksel sayım farkları yetkili **Stok düzeltmesi** ekranından artırma ya da azaltma olarak girilir; gelen yakıt veya araç tüketimi sayılmaz.
-- Giriş ve transferlerde kapasite aşımı, çıkışlarda negatif stok ve araç dolumlarında kronolojik sayaç tutarsızlığı engellenir.
+- Engellenen durumlar: kapasite aşımı, sıfır veya negatif litre, kaynak ile hedefin aynı olması, ileri tarihli hareket, araç dolumunda kronolojik sayaç tutarsızlığı, eksik alış/taşeron fiyatı ve stok düzeltmesinde negatif sayım ya da sıfır fark.
+
+## Negatif stok
+
+Stok eksiye düşmesi **engellenmez**; bu bilinçli bir tercihtir. Amaç sahadaki kaydın tıkanmaması, tutarsızlığın gizlenmeden görünür kalması ve sonradan fiziksel sayımla düzeltilebilmesidir.
+
+- Tanktan veya tankerden yapılan çıkış (iç transfer, araç dolumu) mevcut stoğu aşabilir.
+- Giriş iptal edildiğinde ya da hareket düzeltildiğinde de stok eksiye düşebilir.
+- İşlem her hâlükârda kaydedilir ve kullanıcı hemen şu uyarıyı görür: `Uyarı: <tank veya tanker> stoğu eksiye düştü (-50,000 L). Kalibrasyon ve kayıtları kontrol edin.`
+- Eksi stok kalıcı olarak görünür kalır: gösterge panelindeki **Eksi stok** birim sayacı ve stok kartı etiketi, tank/tanker listesindeki **Eksi stok · Kontrol gerekli** etiketi, rapor stok tablosundaki uyarı vurgusu ve Excel çıktısındaki **Stok Noktaları** sayfasının **Stok durumu** sütunu.
+- Eksi stok, yetkili **Stok düzeltmesi** ekranından fiziksel sayım girilerek ya da yeni bir giriş hareketi kaydedilerek kapatılır.
 
 ## Yönetim ve raporlar
 
