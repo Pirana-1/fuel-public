@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Bölge değiştir — Yakıt Operasyon{% endblock %}
+{% block header_title %}Tanım düzenleme{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="BÖLGE DEĞİŞİKLİĞİ" heading_title="Tank veya tankerin bölgesini değiştir" heading_description=heading_description_expr heading_back_url_name="storage-list" %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form accent-blue" novalidate>
+    {% csrf_token %}
+    <header class="operation-form-header"><div><span class="operation-kicker">MEVCUT KONUM</span><h2>{{ storage.region.name }}</h2><p>{{ storage.get_kind_display }} · Güncel stok {{ current_stock|floatformat:3|intcomma }} L</p></div></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid single">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><a class="button ghost" href="{% url 'storage-list' %}">Vazgeç</a><button class="button primary" type="submit">Bölge değişikliğini kaydet</button></footer>
+  </form>
+  <aside class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><h3>Stok hareketi oluşturmaz</h3><p>Bu işlem tank veya tankerin mevcut bölgesini değiştirir; stoğu, toplam gelen yakıtı ve tüketimi etkilemez.</p><small>Eski ve yeni bölge, tarih, gerekçe ve işlemi yapan kullanıcı kalıcı olarak kaydedilir. Önceki hareketler eski bölgelerinde raporlanmaya devam eder.</small></aside>
+</div>
+{% include "fuel/includes/_region_change_history.html" with history=history history_empty_message="Bu tank veya tanker için henüz bölge değişikliği yok." %}
+{% endblock %}

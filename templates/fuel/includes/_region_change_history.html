@@ -1,0 +1,14 @@
+<section class="panel master-list region-change-history">
+  <div class="panel-heading">
+    <div><span class="eyebrow">GEÇMİŞ</span><h2>Bölge değişiklikleri</h2></div>
+    <span class="count-pill">{{ history.count }}</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tarih</th><th>Eski bölge</th><th>Yeni bölge</th><th>Gerekçe</th><th>Kullanıcı</th></tr></thead>
+      <tbody>
+        {% for change in history %}<tr><td>{{ change.occurred_at|date:"d.m.Y H:i" }}</td><td>{{ change.from_region.name }}</td><td><strong>{{ change.to_region.name }}</strong></td><td>{{ change.reason }}</td><td>{{ change.created_by.username }}</td></tr>{% empty %}<tr><td colspan="5" class="table-empty">{{ history_empty_message }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load fuel_numbers %}
+{% block title %}{% if contractor_report %}Taşeron Dolumları{% else %}Raporlar{% endif %} — Yakıt Operasyon{% endblock %}
+{% block header_title %}Raporlama merkezi{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><span class="eyebrow">{% if contractor_report %}TAŞERON OPERASYONU{% else %}RAPORLAMA{% endif %}</span><h1>{% if contractor_report %}Taşeron yakıt dolumları{% else %}Yakıt tüketim raporu{% endif %}</h1><p>{% if contractor_report %}Taşeron olarak sınıflandırılan araçlara verilen yakıtları ayrı izleyin.{% else %}Dönem, bölge, tank ve araç bazında filtreleyin.{% endif %}</p></div>
+  <div class="heading-actions"><button class="button ghost print-hidden" type="button" data-print-button>Yazdır / PDF</button>{% if contractor_report %}{% if perms.fuel.change_fuelmovement %}<a class="button secondary" href="{% url 'contractor-price-list' %}">Fiyat tanımla</a>{% endif %}<a class="button ghost" href="{% url 'reports' %}?{{ request.GET.urlencode }}">Genel rapor</a>{% else %}<a class="button ghost" href="{% url 'contractor-reports' %}?{{ request.GET.urlencode }}">Taşeron dolumları</a>{% endif %}<a class="button primary" href="{% url report_export_url_name %}?{{ request.GET.urlencode }}">{% include "includes/icons.html" with name="download" %} Excel indir</a></div>
+</section>
+<form method="get" class="filter-bar report-filter{% if contractor_report %} contractor-report-filter{% endif %} print-hidden">
+  <div class="filter-heading">
+    <div><span class="filter-kicker">FİLTRELE</span><strong>Rapor kapsamını seç</strong></div>
+    {% include "fuel/includes/_quick_periods.html" with active_period=filters.period %}
+  </div>
+  <div class="filter-fields">
+    <label class="filter-field"><span>Başlangıç</span><input type="date" name="start" value="{{ filters.start }}"></label>
+    <label class="filter-field"><span>Bitiş</span><input type="date" name="end" value="{{ filters.end }}"></label>
+    {% if not contractor_report %}<label class="filter-field"><span>İşlem türü</span><select name="movement_type"><option value="">Tümü</option>{% for value, label in movement_types %}<option value="{{ value }}" {% if filters.movement_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>{% endif %}
+    <label class="filter-field"><span>Bölge</span><select name="region"><option value="">Tümü</option>{% for item in regions %}<option value="{{ item.id }}" {% if filters.region == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}{% if not item.is_active %} (Pasif){% endif %}</option>{% endfor %}</select></label>
+    <label class="filter-field filter-searchable"><span>Tank/tanker</span><span class="searchable-controls"><select name="storage" data-searchable="true" data-search-placeholder="Tank veya tanker ara"><option value="">Tümü</option>{% for item in storages %}<option value="{{ item.id }}" {% if filters.storage == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }} · {{ item.code }} · {{ item.region.name }}{% if not item.is_active %} (Pasif){% endif %}</option>{% endfor %}</select></span></label>
+    <label class="filter-field filter-searchable"><span>Araç</span><span class="searchable-controls"><select name="vehicle" data-searchable="true" data-search-placeholder="Plaka, RFID, araç veya açıklama ara"><option value="">Tümü</option>{% for item in vehicles %}<option value="{{ item.id }}" {% if filters.vehicle == item.id|stringformat:"s" %}selected{% endif %}>{{ item.code }}{% if item.tag_code %} · RFID {{ item.tag_code }}{% endif %} · {{ item.name }}{% if item.is_contractor %} · Taşeron{% endif %}{% if item.organization %} · {{ item.organization }}{% endif %}{% if not item.is_active %} (Pasif){% endif %}</option>{% endfor %}</select></span></label>
+    <div class="filter-actions">
+      <button class="button primary filter-submit" type="submit">Raporu getir</button>
+      {% if filters.has_active_filters %}<a class="button ghost filter-reset" href="{{ request.path }}">Temizle</a>{% endif %}
+    </div>
+  </div>
+</form>
+<section class="report-metrics">
+  {% if contractor_report %}
+  <div><small>TOPLAM VERİLEN YAKIT</small><strong>{{ totals.consumed|liters_tr }} L</strong></div>
+  <div><small>REFERANS MALİYET</small><strong>{{ contractor_stats.reference_total|number_tr:2 }} TL</strong></div>
+  <div><small>YANSITILAN TUTAR</small><strong>{{ contractor_stats.charged_total|number_tr:2 }} TL</strong></div>
+  <div><small>TOPLAM FARK</small><strong>{{ contractor_stats.difference_total|number_tr:2 }} TL</strong></div>
+  <div><small>AĞIRLIKLI ORT. FİYAT</small><strong>{% if contractor_stats.weighted_average_unit_price is not None %}{{ contractor_stats.weighted_average_unit_price|number_tr:4 }} TL/L{% else %}—{% endif %}</strong></div>
+  {% else %}
+  <div><small>TEDARİKÇİDEN GELEN</small><strong>{{ totals.received|liters_tr }} L</strong></div>
+  <div><small>ALIŞ TUTARI</small><strong>{{ totals.purchase_amount|number_tr:2 }} TL</strong></div>
+  <div><small>ARAÇ TÜKETİMİ</small><strong>{{ totals.consumed|liters_tr }} L</strong></div>
+  <div><small>İÇ TRANSFER</small><strong>{{ totals.transferred|liters_tr }} L</strong></div>
+  {% endif %}
+</section>
+{% if contractor_report and contractor_stats.unpriced_fueling_count %}<div class="form-alert report-price-warning">Bu dönemde fiyat bilgisi olmayan {{ contractor_stats.unpriced_fueling_count }} eski taşeron dolumu var; parasal toplamlar yalnız fiyatlı kayıtları kapsar.</div>{% endif %}
+<section class="panel report-section">
+  <div class="panel-heading"><div><span class="eyebrow">BÖLGE ÖZETİ</span><h2>{% if contractor_report %}Taşeron yakıtının bölge dağılımı{% else %}Bölge bazlı hareketler{% endif %}</h2></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Bölge</th>{% if contractor_report %}<th class="numeric">Verilen yakıt</th>{% else %}<th class="numeric">Tedarikçiden gelen</th><th class="numeric">Transfer giriş</th><th class="numeric">Transfer çıkış</th><th class="numeric">Araç tüketimi</th>{% endif %}</tr></thead><tbody>
+    {% for row in region_summary %}<tr><td><strong>{{ row.region_name }}</strong></td>{% if contractor_report %}<td class="numeric"><strong>{{ row.consumed|liters_tr }} L</strong></td>{% else %}<td class="numeric">{{ row.received|liters_tr }} L</td><td class="numeric">{{ row.transfer_in|liters_tr }} L</td><td class="numeric">{{ row.transfer_out|liters_tr }} L</td><td class="numeric"><strong>{{ row.consumed|liters_tr }} L</strong></td>{% endif %}</tr>{% empty %}<tr><td colspan="{% if contractor_report %}2{% else %}5{% endif %}" class="table-empty">Bu dönemde bölgesel hareket bulunmuyor.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% if not contractor_report %}
+<section class="panel report-section">
+  <div class="panel-heading"><div><span class="eyebrow">TEDARİKÇİ ÖZETİ</span><h2>Alış miktarı ve tutarı</h2><p class="panel-heading-note">Ortalama fiyat, her alımın litre miktarıyla ağırlıklandırılır. Tek tek alım fiyatları aşağıdaki hareket dökümünde gösterilir.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Tedarikçi</th><th class="numeric">Teslimat</th><th class="numeric">Toplam yakıt</th><th class="numeric">Ağırlıklı ort. alış fiyatı</th><th class="numeric">Toplam alış tutarı</th></tr></thead><tbody>
+    {% for row in supplier_summary %}<tr><td><strong>{{ row.supplier__name }}</strong></td><td class="numeric">{{ row.delivery_count }}</td><td class="numeric">{{ row.total_liters|liters_tr }} L</td><td class="numeric">{% if row.average_unit_price is not None %}{{ row.average_unit_price|number_tr:4 }} TL/L{% else %}—{% endif %}</td><td class="numeric">{% if row.total_purchase_amount is not None %}<strong>{{ row.total_purchase_amount|number_tr:2 }} TL</strong>{% else %}—{% endif %}</td></tr>{% empty %}<tr><td colspan="5" class="table-empty">Bu dönemde tedarikçi girişi bulunmuyor.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+<section class="panel report-section">
+  <div class="panel-heading"><div><span class="eyebrow">STOK NOKTALARI</span><h2>Tank ve tanker hareket özeti</h2></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Tank / tanker</th><th>Bölge</th><th class="numeric">Dönem girişi</th><th class="numeric">Transfer giriş</th><th class="numeric">Transfer çıkış</th><th class="numeric">Araca verilen</th><th class="numeric">Güncel stok</th></tr></thead><tbody>
+    {% for row in storage_summary %}<tr><td><strong>{{ row.storage.code }}</strong><small class="cell-subtitle">{{ row.storage.name }} · {{ row.storage.get_kind_display }}</small></td><td>{{ row.storage.region.name }}</td><td class="numeric">{{ row.received|liters_tr }} L</td><td class="numeric">{{ row.transfer_in|liters_tr }} L</td><td class="numeric">{{ row.transfer_out|liters_tr }} L</td><td class="numeric">{{ row.vehicle_out|liters_tr }} L</td><td class="numeric"><strong class="{% if row.is_negative_stock %}warning-text{% endif %}">{{ row.current_stock|liters_tr }} L</strong>{% if row.is_negative_stock %}<small class="cell-subtitle warning-text">Eksi stok · kontrol gerekli</small>{% elif row.adjustment_net %}<small class="cell-subtitle">Düzeltme: {{ row.adjustment_net|liters_tr }} L</small>{% endif %}</td></tr>{% empty %}<tr><td colspan="7" class="table-empty">Stok noktası bulunmuyor.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+<section class="panel report-section">
+  <div class="panel-heading"><div><span class="eyebrow">ARAÇ ÖZETİ</span><h2>{% if contractor_report %}Taşeron araç bazlı tüketim{% else %}Araç bazlı tüketim{% endif %}</h2></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Araç</th><th>Bölge</th><th>Açıklama</th><th>Araç sınıfı</th><th>Sayaç türü</th><th class="numeric">Dolum</th><th class="numeric">Toplam tüketim</th>{% if contractor_report %}<th class="numeric">Yansıtılan tutar</th><th class="numeric">Toplam fark</th>{% endif %}</tr></thead><tbody>
+    {% for row in vehicle_summary %}<tr><td><strong>{{ row.vehicle__code }}</strong><small class="cell-subtitle">{{ row.vehicle__name }}</small></td><td>{{ row.vehicle_region__name }}</td><td>{{ row.vehicle__organization|default:"—" }}</td><td>{% if row.vehicle__is_contractor %}Taşeron{% else %}Kurum aracı{% endif %}</td><td>{% if row.vehicle__meter_type == 'KM' %}Kilometre{% elif row.vehicle__meter_type == 'HOUR' %}Çalışma saati{% else %}Sayaç yok{% endif %}</td><td class="numeric">{{ row.fueling_count }}</td><td class="numeric"><strong>{{ row.total_liters|liters_tr }} L</strong></td>{% if contractor_report %}<td class="numeric"><strong>{{ row.charged_total|number_tr:2 }} TL</strong></td><td class="numeric">{{ row.difference_total|number_tr:2 }} TL</td>{% endif %}</tr>{% empty %}<tr><td colspan="{% if contractor_report %}9{% else %}7{% endif %}" class="table-empty">Bu dönemde araç tüketimi bulunmuyor.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+<section class="panel report-section">
+  <div class="panel-heading"><div><span class="eyebrow">DETAY</span><h2>{% if contractor_report %}Taşeron dolum kayıtları{% else %}Hareket dökümü{% endif %}</h2></div></div>
+  {% if contractor_report %}
+  <div class="table-wrap"><table class="contractor-price-report-table"><thead><tr><th>Tarih</th><th>Araç</th><th>Bölge</th><th>Yakıtın çıktığı tank/tanker</th><th class="numeric">Verilen yakıt</th><th class="numeric">Referans fiyat</th><th class="numeric">Taşeron fiyatı</th><th class="numeric">Birim fark</th><th class="numeric">Referans toplam</th><th class="numeric">Yansıtılan toplam</th><th class="numeric">Toplam fark</th><th>Kaydı giren</th><th>Açıklama</th></tr></thead><tbody>
+    {% for movement in page_obj %}<tr><td>{{ movement.occurred_at|date:"d.m.Y H:i" }}</td><td><strong>{{ movement.vehicle.code }}</strong><small class="cell-subtitle">{{ movement.vehicle.name }}</small></td><td>{{ movement.vehicle_region.name }}</td><td>{{ movement.source_storage }}</td><td class="numeric"><strong>{{ movement.liters|liters_tr }} L</strong></td><td class="numeric">{% if movement.contractor_reference_unit_price is not None %}{{ movement.contractor_reference_unit_price|number_tr:4 }} TL/L{% else %}—{% endif %}</td><td class="numeric">{% if movement.contractor_unit_price is not None %}<strong>{{ movement.contractor_unit_price|number_tr:4 }} TL/L</strong>{% else %}—{% endif %}</td><td class="numeric">{% if movement.contractor_unit_difference is not None %}{{ movement.contractor_unit_difference|number_tr:4 }} TL/L{% else %}—{% endif %}</td><td class="numeric">{% if movement.contractor_reference_total is not None %}{{ movement.contractor_reference_total|number_tr:2 }} TL{% else %}—{% endif %}</td><td class="numeric">{% if movement.contractor_charged_total is not None %}<strong>{{ movement.contractor_charged_total|number_tr:2 }} TL</strong>{% else %}—{% endif %}</td><td class="numeric">{% if movement.contractor_difference_total is not None %}{{ movement.contractor_difference_total|number_tr:2 }} TL{% else %}—{% endif %}</td><td>{{ movement.created_by.get_username }}</td><td>{{ movement.note|default:"—" }}</td></tr>{% empty %}<tr><td colspan="13" class="table-empty">Taşeron dolumu bulunamadı.</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}
+  <div class="table-wrap"><table><thead><tr><th>Tarih</th><th>İşlem</th><th>Kaynak</th><th>Hedef / Araç</th><th>İrsaliye</th><th>Araç sınıfı</th><th>Sayaç türü</th><th class="numeric">Sayaç</th><th class="numeric">Miktar</th><th class="numeric">Birim fiyat</th><th class="numeric">Tutar / fark</th><th>Açıklama</th></tr></thead><tbody>
+    {% for movement in page_obj %}<tr><td>{{ movement.occurred_at|date:"d.m.Y H:i" }}</td><td>{{ movement.get_movement_type_display }}</td><td>{{ movement.source_storage|default:movement.supplier|default:"—" }}</td><td>{{ movement.destination_storage|default:movement.vehicle|default:"—" }}</td><td>{{ movement.delivery_note|default:"—" }}</td><td>{% if movement.vehicle_id %}{% if movement.vehicle.is_contractor %}Taşeron{% else %}Kurum aracı{% endif %}{% else %}—{% endif %}</td><td>{% if movement.vehicle_id %}{{ movement.vehicle.get_meter_type_display }}{% else %}—{% endif %}</td><td class="numeric">{% if movement.meter_value is not None %}{{ movement.meter_value|number_tr }} {% if movement.vehicle.meter_type == 'KM' %}km{% elif movement.vehicle.meter_type == 'HOUR' %}saat{% endif %}{% else %}—{% endif %}</td><td class="numeric"><strong>{{ movement.liters|liters_tr }} L</strong></td><td class="numeric">{% if movement.purchase_unit_price is not None %}{{ movement.purchase_unit_price|number_tr:4 }} TL/L{% elif movement.contractor_unit_price is not None %}{{ movement.contractor_unit_price|number_tr:4 }} TL/L<small class="cell-subtitle">Referans: {{ movement.contractor_reference_unit_price|number_tr:4 }} TL/L</small>{% else %}—{% endif %}</td><td class="numeric">{% if movement.purchase_total is not None %}<strong>{{ movement.purchase_total|number_tr:2 }} TL</strong>{% elif movement.contractor_charged_total is not None %}<strong>{{ movement.contractor_charged_total|number_tr:2 }} TL</strong><small class="cell-subtitle">Fark: {{ movement.contractor_difference_total|number_tr:2 }} TL</small>{% else %}—{% endif %}</td><td>{{ movement.note|default:"—" }}</td></tr>{% empty %}<tr><td colspan="12" class="table-empty">Hareket bulunamadı.</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% endif %}
+  {% include "includes/pagination.html" %}
+</section>
+{% endblock %}

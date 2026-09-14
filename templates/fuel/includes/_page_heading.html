@@ -1,0 +1,12 @@
+<section class="page-heading compact{% if heading_extra_class %} {{ heading_extra_class }}{% endif %}">
+  <div>
+    <span class="eyebrow">{{ heading_eyebrow }}</span>
+    <h1>{{ heading_title }}</h1>
+    {% if heading_description %}<p>{{ heading_description }}</p>{% endif %}
+  </div>
+  {% if heading_back_url_name %}
+  <a class="button ghost" href="{% url heading_back_url_name %}">
+    {% include "includes/icons.html" with name="arrow-left" %} {{ heading_back_label|default:"Listeye dön" }}
+  </a>
+  {% endif %}
+</section>

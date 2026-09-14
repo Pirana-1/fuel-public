@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load fuel_numbers %}
+{% block title %}Tedarikçiler — Yakıt Operasyon{% endblock %}
+{% block header_title %}Ana veriler{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><span class="eyebrow">TANIMLAR</span><h1>Tedarikçiler</h1><p>Motorin girişlerinde kullanılan tedarikçileri ve toplam teslimatlarını yönetin.</p></div>
+  {% if can_add %}<a class="button primary" href="{% url 'supplier-create' %}">{% include "includes/icons.html" with name="plus" %} Yeni tedarikçi</a>{% endif %}
+</section>
+<section class="panel master-list supplier-list-panel">
+  <div class="panel-heading"><div><span class="eyebrow">KAYITLAR</span><h2>Tanımlı tedarikçiler</h2></div><span class="count-pill">{{ page_obj.paginator.count }}</span></div>
+  {% include "includes/master_filters.html" with search_placeholder="Tedarikçi adı ara" %}
+  <div class="table-wrap supplier-table-wrap">
+    <table class="supplier-table">
+      <thead><tr><th>Tedarikçi</th><th class="numeric">Toplam gelen</th><th>Durum</th><th class="supplier-actions-heading">İşlemler</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td class="supplier-name-cell"><strong>{{ item.name }}</strong></td>
+            <td class="numeric"><strong>{{ item.total_received|liters_tr }} L</strong></td>
+            <td><span class="status {% if item.is_active %}active{% else %}passive{% endif %}">{% if item.is_active %}Aktif{% else %}Pasif{% endif %}</span></td>
+            <td class="supplier-actions-cell">
+              {% if perms.fuel.change_supplier %}
+                <div class="row-actions supplier-actions">
+                  <details class="row-action-menu">
+                    <summary aria-label="{{ item.name }} için işlemler">•••</summary>
+                    <div class="row-action-menu-panel">
+                      <a href="{% url 'supplier-edit' item.pk %}">Düzenle</a>
+                      <form method="post" action="{% url 'supplier-toggle' item.pk %}">{% csrf_token %}<button type="submit">{% if item.is_active %}Pasife al{% else %}Aktifleştir{% endif %}</button></form>
+                    </div>
+                  </details>
+                </div>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        {% empty %}<tr><td colspan="4" class="table-empty">Filtreye uygun tedarikçi bulunamadı.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+</section>
+{% endblock %}

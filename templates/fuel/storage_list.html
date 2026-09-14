@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load fuel_numbers %}
+{% block title %}Tanklar ve Tankerler — Yakıt Operasyon{% endblock %}
+{% block header_title %}Ana veriler{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><span class="eyebrow">TANIMLAR</span><h1>Tanklar ve mobil tankerler</h1><p>Stok noktalarını, kapasitelerini ve güncel bölgelerini yönetin.</p></div>
+  <div class="heading-actions">
+    {% if perms.fuel.add_fuelmovement %}<a class="button ghost" href="{% url 'opening-balance-create' %}">Başlangıç stoğu gir</a>{% endif %}
+    {% if can_add %}<a class="button primary" href="{% url 'storage-create' %}">{% include "includes/icons.html" with name="plus" %} Yeni tank veya tanker</a>{% endif %}
+  </div>
+</section>
+<section class="panel master-list storage-list-panel">
+  <div class="panel-heading storage-panel-heading">
+    <div><span class="eyebrow">KAYITLAR</span><h2>Stok noktaları</h2></div>
+    <div class="storage-heading-tools">
+      <span class="count-pill">{{ page_obj.paginator.count }}</span>
+      <div class="storage-view-toggle" data-storage-view-toggle role="group" aria-label="Stok noktası görünümü">
+        <button class="storage-view-button active" type="button" data-storage-view="list" aria-pressed="true">
+          {% include "includes/icons.html" with name="movements" %}<span>Liste</span>
+        </button>
+        <button class="storage-view-button" type="button" data-storage-view="tank" aria-pressed="false">
+          {% include "includes/icons.html" with name="tank" %}<span>Tank görünümü</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  {% include "includes/master_filters.html" %}
+  <div class="storage-view" data-storage-view-panel="list">
+    <div class="table-wrap storage-table-wrap">
+      <table class="storage-table">
+        <thead><tr><th>Ad / kod</th><th>Tür</th><th>Bölge</th><th class="numeric">Güncel stok</th><th class="numeric">Kapasite</th><th>Durum</th><th class="storage-actions-heading">İşlemler</th></tr></thead>
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td class="storage-name"><strong>{{ item.name }}</strong><small class="cell-subtitle">{{ item.code }}</small></td>
+              <td class="storage-kind-cell">{{ item.get_kind_display }}</td>
+              <td class="storage-region">{{ item.region.name }}</td>
+              <td class="numeric"><strong class="{% if item.is_negative_stock or item.is_low_stock %}warning-text{% endif %}">{{ item.current_stock|liters_tr }} L</strong>{% if item.is_negative_stock %}<small class="cell-subtitle warning-text">Eksi stok</small>{% endif %}</td>
+              <td class="numeric">{% if item.capacity_liters %}{{ item.capacity_liters|liters_tr:0 }} L{% else %}—{% endif %}</td>
+              <td><span class="status {% if item.is_active %}active{% else %}passive{% endif %}">{% if item.is_active %}Aktif{% else %}Pasif{% endif %}</span></td>
+              <td class="storage-actions-cell">
+                {% if perms.fuel.change_storageunit %}
+                  <div class="row-actions storage-actions">
+                    <a class="region-change-link" href="{% url 'storage-region-change' item.pk %}">Bölge değiştir</a>
+                    <details class="row-action-menu">
+                      <summary aria-label="{{ item.code }} için diğer işlemler">•••</summary>
+                      <div class="row-action-menu-panel">
+                        <a href="{% url 'storage-edit' item.pk %}">Düzenle</a>
+                        <form method="post" action="{% url 'storage-toggle' item.pk %}">{% csrf_token %}<button type="submit">{% if item.is_active %}Pasife al{% else %}Aktifleştir{% endif %}</button></form>
+                      </div>
+                    </details>
+                  </div>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+          {% empty %}<tr><td colspan="7" class="table-empty">Filtreye uygun tank veya tanker bulunamadı.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="storage-view" data-storage-view-panel="tank" hidden>
+    {% if items %}
+      <div class="storage-visual-grid">
+        {% for item in items %}
+          <article class="storage-visual-card {% if item.kind == 'MOBILE_TANKER' %}mobile{% else %}fixed{% endif %}{% if item.is_low_stock %} low-stock{% endif %}{% if item.is_negative_stock %} negative-stock{% endif %}">
+            <div class="storage-visual-header">
+              <span class="storage-visual-kind">{% if item.kind == 'FIXED_TANK' %}{% include "includes/icons.html" with name="tank" size="lg" %}{% else %}{% include "includes/icons.html" with name="truck" size="lg" %}{% endif %}</span>
+              <div class="storage-visual-identity">
+                <span class="eyebrow">{% if item.kind == 'FIXED_TANK' %}SABİT TANK{% else %}MOBİL TANKER{% endif %}</span>
+                <h3>{{ item.name }}</h3>
+                <small>{{ item.code }} · {{ item.region.name }}</small>
+              </div>
+              <span class="status {% if item.is_active %}active{% else %}passive{% endif %}">{% if item.is_active %}Aktif{% else %}Pasif{% endif %}</span>
+            </div>
+
+            <div class="storage-illustration" role="img" aria-label="{{ item.name }} stok görünümü"{% if item.is_active %} data-storage-slosh-source title="Mazotu oynatmak için tankı tutup sürükleyin"{% endif %}>
+              {% if item.kind == 'FIXED_TANK' %}
+                <div class="fixed-tank-illustration">
+                  <span class="tank-neck"><span class="tank-cap"></span></span>
+                  <span class="tank-leg left"></span><span class="tank-leg right"></span>
+                  <span class="fixed-tank-shell">
+                    {% if item.capacity_liters %}<span class="tank-liquid" style="height: {{ item.fill_percent|floatformat:'0u' }}%"></span>{% endif %}
+                    <span class="tank-rib first"></span><span class="tank-rib second"></span><span class="tank-rib third"></span>
+                    <span class="tank-outlet"></span><span class="tank-plate">M</span>
+                  </span>
+                </div>
+              {% else %}
+                <div class="mobile-tanker-illustration">
+                  <span class="tanker-chassis"></span>
+                  <span class="tanker-axle front"></span><span class="tanker-axle rear"></span>
+                  <span class="tanker-wheel front"></span><span class="tanker-wheel rear"></span>
+                  <span class="tanker-cab"><span class="tanker-window"></span><span class="tanker-mirror"></span><span class="tanker-grille"></span><span class="tanker-light"></span></span>
+                  <span class="tanker-body">
+                    {% if item.capacity_liters %}<span class="tank-liquid" style="height: {{ item.fill_percent|floatformat:'0u' }}%"></span>{% endif %}
+                    <span class="tank-rib first"></span><span class="tank-rib second"></span><span class="tank-rib third"></span>
+                    <span class="tanker-manway"></span><span class="tanker-ladder"></span>
+                  </span>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="storage-visual-status">
+              {% if item.is_negative_stock %}
+                <span>Eksi stok</span><strong>Kontrol gerekli</strong>
+              {% elif item.capacity_liters %}
+                <span>{% if item.is_negative_stock %}Eksi stok{% elif item.is_low_stock %}Düşük stok{% else %}Doluluk durumu{% endif %}</span>
+                <strong>%{{ item.fill_percent|floatformat:'0' }} dolu</strong>
+              {% else %}
+                <span>Kapasite bilgisi</span><strong>Tanımlı değil</strong>
+              {% endif %}
+            </div>
+            <div class="storage-visual-stats">
+              <div><span>GÜNCEL STOK</span><strong class="{% if item.is_negative_stock or item.is_low_stock %}warning-text{% endif %}">{{ item.current_stock|liters_tr }} L</strong></div>
+              <div><span>KAPASİTE</span><strong>{% if item.capacity_liters %}{{ item.capacity_liters|liters_tr:0 }} L{% else %}—{% endif %}</strong></div>
+            </div>
+
+            {% if perms.fuel.change_storageunit %}
+              <div class="row-actions storage-visual-actions">
+                <a class="region-change-link" href="{% url 'storage-region-change' item.pk %}">Bölge değiştir</a>
+                <details class="row-action-menu">
+                  <summary aria-label="{{ item.code }} için diğer işlemler">•••</summary>
+                  <div class="row-action-menu-panel">
+                    <a href="{% url 'storage-edit' item.pk %}">Düzenle</a>
+                    <form method="post" action="{% url 'storage-toggle' item.pk %}">{% csrf_token %}<button type="submit">{% if item.is_active %}Pasife al{% else %}Aktifleştir{% endif %}</button></form>
+                  </div>
+                </details>
+              </div>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><strong>Henüz tank veya tanker yok.</strong><p>Filtreye uygun tank veya tanker bulunamadı.</p></div>
+    {% endif %}
+  </div>
+  {% include "includes/pagination.html" %}
+</section>
+{% endblock %}

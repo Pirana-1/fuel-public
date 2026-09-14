@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Yetki gerekli{% endblock %}
+{% block auth_content %}<div class="error-page"><span>403</span><h1>Bu işlem için yetkiniz yok.</h1><p>Gerekli erişim için sistem yöneticinizle görüşün.</p><a class="button primary" href="{% url 'dashboard' %}">Gösterge paneline dön</a></div>{% endblock %}
+{% block content %}<div class="error-page"><span>403</span><h1>Bu işlem için yetkiniz yok.</h1><p>Gerekli erişim için sistem yöneticinizle görüşün.</p><a class="button primary" href="{% url 'dashboard' %}">Gösterge paneline dön</a></div>{% endblock %}
+

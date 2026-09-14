@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Yeni bölge — Yakıt Operasyon{% endblock %}
+{% block header_title %}Yeni tanım{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="YENİ BÖLGE" heading_title="Yeni bölge" heading_description="Tank, tanker ve araçların bağlanacağı operasyon bölgesini tanımlayın." heading_back_url_name="region-list" %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form accent-blue" novalidate>
+    {% csrf_token %}
+    <header class="definition-form-header"><span class="operation-kicker">TANIM BİLGİLERİ</span><h2>Bölge detayları</h2></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid single">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><a class="button ghost" href="{% url 'region-list' %}">Vazgeç</a><button class="button primary" type="submit">Bölgeyi ekle</button></footer>
+  </form>
+  <aside class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><h3>Kısa ve ayırt edilebilir kod</h3><p>Bölge kodu filtrelerde ve kayıt seçimlerinde bölgeyi hızlı ayırt etmek için kullanılır.</p><small>Aktif tank, tanker veya araç bağlı bir bölge pasife alınamaz.</small></aside>
+</div>
+{% endblock %}

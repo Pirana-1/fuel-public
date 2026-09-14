@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Araç bölgesi değiştir — Yakıt Operasyon{% endblock %}
+{% block header_title %}Tanım düzenleme{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="BÖLGE DEĞİŞİKLİĞİ" heading_title="Aracın veya makinenin bölgesini değiştir" heading_description=heading_description_expr heading_back_url_name="vehicle-list" %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form accent-blue" novalidate>
+    {% csrf_token %}
+    <header class="definition-form-header"><span class="operation-kicker">MEVCUT BÖLGE</span><h2>{{ vehicle.region.name }}</h2><p>{{ vehicle.get_meter_type_display }}{% if latest_meter is not None %} · Son sayaç {{ latest_meter|floatformat:2|intcomma }}{% endif %}</p></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid single">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><a class="button ghost" href="{% url 'vehicle-list' %}">Vazgeç</a><button class="button primary" type="submit">Bölge değişikliğini kaydet</button></footer>
+  </form>
+  <aside class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><h3>Yakıt kaydı oluşturmaz</h3><p>Bu işlem aracın güncel bölgesini değiştirir; sayacı, dolum geçmişini ve tüketim miktarını etkilemez.</p><small>Eski ve yeni bölge, tarih, gerekçe ve işlemi yapan kullanıcı kalıcı olarak kaydedilir. Önceki dolumlar eski bölgelerinde raporlanmaya devam eder.</small></aside>
+</div>
+{% include "fuel/includes/_region_change_history.html" with history=history history_empty_message="Bu araç veya makine için henüz bölge değişikliği yok." %}
+{% endblock %}

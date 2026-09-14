@@ -1,0 +1,51 @@
+{% load humanize fuel_numbers %}
+{% include "fuel/includes/dashboard_metrics.html" %}
+
+{% if perms.fuel.add_fuelmovement %}
+<section class="quick-actions">
+  <a class="quick-card green" href="{% url 'supplier-receipt-create' %}"><span>{% include "includes/icons.html" with name="plus" size="lg" %}</span><div><strong>Yakıt girişi</strong><small>Tedarikçiden sabit tanka</small></div><b>{% include "includes/icons.html" with name="arrow-right" %}</b></a>
+  <a class="quick-card blue" href="{% url 'internal-transfer-create' %}"><span>{% include "includes/icons.html" with name="transfer" size="lg" %}</span><div><strong>Tankere transfer</strong><small>Sabit tanktan mobil tankere</small></div><b>{% include "includes/icons.html" with name="arrow-right" %}</b></a>
+  <a class="quick-card orange" href="{% url 'vehicle-fueling-create' %}"><span>{% include "includes/icons.html" with name="trending-up" size="lg" %}</span><div><strong>Araca yakıt ver</strong><small>Tank veya tanker üzerinden</small></div><b>{% include "includes/icons.html" with name="arrow-right" %}</b></a>
+</section>
+{% endif %}
+
+<section class="dashboard-grid">
+  <article class="panel storage-panel">
+    <div class="panel-heading">
+      <div><span class="eyebrow">STOK NOKTALARI</span><h2>Tank ve tanker durumu</h2></div>
+      {% if perms.fuel.view_storageunit %}<a href="{% url 'storage-list' %}">Tümünü gör {% include "includes/icons.html" with name="arrow-right" %}</a>{% endif %}
+    </div>
+    {% if storage_cards %}
+      <div class="storage-list">
+      {% for item in storage_cards %}
+        <div class="storage-row">
+          <span class="storage-kind {% if item.kind == 'FIXED_TANK' %}fixed{% else %}mobile{% endif %}">{% if item.kind == 'FIXED_TANK' %}{% include "includes/icons.html" with name="tank" size="lg" %}{% else %}{% include "includes/icons.html" with name="truck" size="lg" %}{% endif %}</span>
+          <div class="storage-main"><strong>{{ item.name }}</strong><small>{{ item.region.name }} · {{ item.get_kind_display }}</small>
+            {% if item.fill_percent is not None %}<div class="progress" role="progressbar" aria-label="{{ item.name }} doluluk oranı" aria-valuenow="{{ item.fill_percent|floatformat:'0' }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ item.fill_percent|floatformat:'0u' }}%"></span></div>{% endif %}
+          </div>
+          <div class="storage-value {% if item.is_low_stock or item.is_negative_stock %}low{% endif %}"><strong>{{ item.current_stock|floatformat:3|intcomma }} L</strong>{% if item.is_negative_stock %}<small class="stock-warning">Eksi stok</small>{% elif item.is_low_stock %}<small class="stock-warning">Düşük stok</small>{% elif item.capacity_liters %}<small>%{{ item.fill_percent|floatformat:"0" }} dolu · {{ item.capacity_liters|liters_tr:0 }} L kapasite</small>{% endif %}</div>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}<div class="empty-state"><strong>Henüz tank veya tanker yok.</strong><p>Önce bölge ve depolama birimi tanımlayın.</p></div>{% endif %}
+  </article>
+
+  <article class="panel">
+    <div class="panel-heading"><div><span class="eyebrow">ARAÇ TÜKETİMİ</span><h2>Dönemin öne çıkanları</h2></div><a href="{% url 'reports' %}">Raporu aç {% include "includes/icons.html" with name="arrow-right" %}</a></div>
+    {% if top_vehicles %}
+      <ol class="ranking">
+      {% for row in top_vehicles %}
+        <li><span>{{ forloop.counter }}</span><div><strong>{{ row.vehicle__code }}</strong><small>{{ row.vehicle__name }} · {{ row.fueling_count }} dolum</small></div><b>{{ row.total_liters|liters_tr }} L</b></li>
+      {% endfor %}
+      </ol>
+    {% else %}<div class="empty-state"><strong>Bu dönemde araç tüketimi yok.</strong><p>Araca yakıt verildiğinde burada görünecek.</p></div>{% endif %}
+  </article>
+</section>
+
+<section class="panel recent-panel">
+  <div class="panel-heading"><div><span class="eyebrow">SON HAREKETLER</span><h2>Operasyon akışı</h2></div><a href="{% url 'movement-list' %}">Hareketleri aç {% include "includes/icons.html" with name="arrow-right" %}</a></div>
+  <div class="table-wrap">
+    <table><thead><tr><th>Tarih</th><th>İşlem</th><th>Kaynak</th><th>Hedef / Araç</th><th class="numeric">Miktar</th><th>Kullanıcı</th></tr></thead>
+    <tbody>{% for movement in recent_movements %}<tr><td>{{ movement.occurred_at|date:"d.m.Y H:i" }}</td><td><span class="badge {{ movement.movement_type|lower }}">{{ movement.get_movement_type_display }}</span></td><td>{{ movement.source_storage|default:movement.supplier|default:"—" }}</td><td>{{ movement.destination_storage|default:movement.vehicle|default:"—" }}</td><td class="numeric"><strong>{{ movement.liters|liters_tr }} L</strong></td><td>{{ movement.created_by.get_username }}</td></tr>{% empty %}<tr><td colspan="6" class="table-empty">Bu dönemde yakıt hareketi bulunmuyor.</td></tr>{% endfor %}</tbody></table>
+  </div>
+</section>

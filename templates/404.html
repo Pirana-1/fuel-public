@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Sayfa bulunamadı{% endblock %}
+{% block auth_content %}<div class="error-page"><span>404</span><h1>Aradığınız sayfa bulunamadı.</h1><p>Adres değişmiş veya sayfa kaldırılmış olabilir.</p><a class="button primary" href="{% url 'dashboard' %}">Gösterge paneline dön</a></div>{% endblock %}
+{% block content %}<div class="error-page"><span>404</span><h1>Aradığınız sayfa bulunamadı.</h1><p>Adres değişmiş veya sayfa kaldırılmış olabilir.</p><a class="button primary" href="{% url 'dashboard' %}">Gösterge paneline dön</a></div>{% endblock %}
+

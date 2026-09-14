@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load fuel_numbers %}
+{% block title %}Saha yakıt kaydı — Yakıt Operasyon{% endblock %}
+{% block header_title %}Saha operasyonu{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="SAHA OPERASYONU" heading_title="Yakıt kaydı gönder" heading_description="Yakıt verilen aracı ve sayaç bilgisini girin; kayıt yönetici onayından sonra stoğa işlenir." heading_extra_class="operator-heading" %}
+
+<div class="operator-page-grid">
+  <form method="post" class="panel operation-form operator-request-form accent-orange" novalidate>
+    {% csrf_token %}
+    <header class="operation-form-header"><div><span class="operation-kicker">YENİ KAYIT</span><h2>Dolum bilgileri</h2></div><span class="status pending">Onaya gönderilecek</span></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    {% if not form.source_storage.field.queryset.exists %}<div class="form-alert">Size atanmış aktif tank veya tanker bulunmuyor. Yöneticiyle iletişime geçin.</div>{% endif %}
+    <div class="form-grid operation-fields operator-request-fields">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><button class="button primary" type="submit" {% if not form.source_storage.field.queryset.exists %}disabled{% endif %}>Onaya gönder {% include "includes/icons.html" with name="arrow-right" %}</button></footer>
+  </form>
+
+  <section class="panel operator-recent-panel">
+    <header class="panel-heading"><div><span class="eyebrow">SON GÖNDERİMLERİM</span><h2>Kayıt durumu</h2></div><span class="count-pill">{{ recent_requests|length }}</span></header>
+    {% if recent_requests %}
+      <div class="operator-request-cards">
+        {% for item in recent_requests %}
+          <article class="operator-request-card">
+            <div><strong>{{ item.vehicle.code }}</strong><small>{{ item.vehicle.name }} · {{ item.source_storage.name }}</small></div>
+            <div class="operator-request-amount"><strong>{{ item.liters|liters_tr }} L</strong><span class="status {{ item.status|lower }}">{{ item.get_status_display }}</span></div>
+            <small>{{ item.occurred_at|date:"d.m.Y H:i" }}{% if item.decision_reason %} · {{ item.decision_reason }}{% endif %}</small>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}<div class="empty-state"><strong>Henüz kayıt göndermediniz.</strong><p>Gönderdiğiniz dolumlar burada takip edilir.</p></div>{% endif %}
+  </section>
+</div>
+{{ storage_status|json_script:"operation-storage-status" }}
+{{ vehicle_meter_status|json_script:"vehicle-meter-status" }}
+{% endblock %}

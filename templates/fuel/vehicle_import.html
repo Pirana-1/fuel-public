@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Araçları içe aktar — Yakıt Operasyon{% endblock %}
+{% block header_title %}Araç içe aktarma{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><span class="eyebrow">EXCEL İÇE AKTARMA</span><h1>Araç ve RFID listesini yükle</h1><p>Dosyayı önce doğrulayın, sayaç türlerini kontrol edin ve ardından kayıtları oluşturun.</p></div>
+  <a class="button ghost" href="{% url 'vehicle-list' %}">{% include "includes/icons.html" with name="arrow-left" %} Araçlara dön</a>
+</section>
+
+<div class="form-layout">
+  <form method="post" enctype="multipart/form-data" class="panel operation-form accent-blue" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="preview">
+    <header class="definition-form-header"><span class="operation-kicker">DOSYA SEÇİMİ</span><h2>Excel dosyasını kontrol et</h2></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+    <div class="form-grid">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><a class="button ghost" href="{% url 'vehicle-list' %}">Vazgeç</a><button class="button primary" type="submit">Dosyayı kontrol et</button></footer>
+  </form>
+  <aside class="form-note panel">
+    <span class="note-icon">{% include "includes/icons.html" with name="info" %}</span>
+    <h3>Dosya doğrudan kaydedilmez</h3>
+    <p>İlk adım yalnızca satırları doğrular ve kaç aracın oluşturulacağını gösterir. Onay verilmeden veritabanı değişmez.</p>
+    <small>Araç anahtarı RFID kodu olarak metin biçiminde saklanır. Son sütundaki km/saat sayaç türünü, taşeron değeri ise araç sınıfını belirler; bölgesi anlaşılamayan kayıtlar ayrı bir bölgede işaretlenir.</small>
+  </aside>
+</div>
+
+{% if preview %}
+<section class="panel master-list">
+  <div class="panel-heading"><div><span class="eyebrow">ÖNİZLEME</span><h2>{{ preview.sheet_name }} sayfası</h2></div><span class="count-pill">{{ preview.row_count }}</span></div>
+  <section class="summary-strip vehicle-import-summary">
+    <div><small>YENİ KAYIT</small><strong>{{ preview.create_count }}</strong></div>
+    <div><small>ARAÇ GÜNCELLEMESİ</small><strong>{{ preview.update_count }}</strong></div>
+    <div><small>DEĞİŞMEYECEK</small><strong>{{ preview.skip_count }}</strong></div>
+    <div><small>GEÇMİŞ NEDENİYLE BEKLEYEN</small><strong>{{ preview.protected_count }}</strong></div>
+    <div><small>BÖLGESİ BELİRSİZ</small><strong>{{ preview.unassigned_region_count }}</strong></div>
+  </section>
+  {% if preview.warnings %}<div class="form-alert warning"><strong>Güvenlik nedeniyle korunacak sayaç türleri</strong>{% for warning in preview.warnings %}<p>{{ warning }}</p>{% endfor %}<small>Bu kayıtlar içe aktarımı durdurmaz. Geçmişe bağlı sayaç türleri korunur; araç sınıfı ayrıca güncellenebilir.</small></div>{% endif %}
+  {% if preview.conflicts %}
+    <div class="form-alert"><strong>İçe aktarma çakışmaları</strong>{% for conflict in preview.conflicts %}<p>{{ conflict }}</p>{% endfor %}</div>
+  {% else %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Excel satırı</th><th>Araç kodu/plaka</th><th>RFID kodu</th><th>Araç/makine</th><th>Bölge</th><th>Açıklama</th><th>Araç sınıfı</th><th>Sayaç türü</th></tr></thead>
+        <tbody>{% for row in preview.sample_rows %}<tr><td>{{ row.source_row }}</td><td><strong>{{ row.code }}</strong></td><td>{{ row.tag_code }}</td><td>{{ row.name }}</td><td>{{ row.region_name }}</td><td>{{ row.organization|default:"—" }}</td><td>{{ row.vehicle_class_label }}</td><td>{{ row.meter_type_label }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    <form method="post" class="form-actions">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="import">
+      <input type="hidden" name="preview_token" value="{{ preview_token }}">
+      <span class="muted-value">Sayaç türü ve taşeron sınıfı Excel'in son sütunundan ayrıştırılıyor · İlk 10 kayıt gösteriliyor.</span>
+      <button class="button primary" type="submit">{{ preview.import_count }} kaydı uygula</button>
+    </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

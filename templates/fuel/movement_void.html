@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Hareketi İptal Et — Yakıt Operasyon{% endblock %}
+{% block header_title %}Hareket iptali{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="DENETİMLİ İPTAL" heading_title="Yakıt hareketini iptal et" heading_description="Kayıt silinmez; gerekçe ve iptal eden kullanıcıyla geçmişte kalır." heading_back_url_name="movement-list" heading_back_label="Hareketlere dön" %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form danger-panel" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="movement-summary">
+      <div><small>İŞLEM</small><strong>{{ movement.get_movement_type_display }}</strong></div>
+      <div><small>TARİH</small><strong>{{ movement.occurred_at|date:"d.m.Y H:i" }}</strong></div>
+      <div><small>MİKTAR</small><strong>{{ movement.liters|floatformat:3|intcomma }} L</strong></div>
+      <div><small>KAYNAK / HEDEF</small><strong>{{ movement.source_storage|default:movement.supplier|default:"—" }} → {{ movement.destination_storage|default:movement.vehicle|default:"—" }}</strong></div>
+    </div>
+    <div class="form-grid single">{% include "includes/form_fields.html" %}</div>
+    <div class="form-actions"><a class="button ghost" href="{% url 'movement-list' %}">Vazgeç</a><button class="button danger" type="submit">Hareketi iptal et</button></div>
+  </form>
+  <aside class="form-note panel"><span class="note-icon danger-note">{% include "includes/icons.html" with name="alert" %}</span><h3>Bu işlem ne yapar?</h3><p>Hareket stok ve rapor hesaplarından çıkarılır. Kayıt, iptal gerekçesi ve kullanıcı bilgisiyle hareket defterinde görünmeye devam eder.</p><small>İptal sonrası kaynak tank veya tanker stoğu eksiye düşebilir; işlem sonrasında eksi stok uyarısını kontrol edin.</small></aside>
+</div>
+{% endblock %}

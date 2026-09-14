@@ -1,0 +1,25 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
+staticfiles/
+media/
+backups/
+.idea/
+.vscode/
+plan.md
+PLAN.md
+agents.md
+AGENTS.md
+claude.md
+CLAUDE.md
+
+# Kurum verisi içerebilecek referans Excel dosyaları ve veritabanı dışa aktarımları
+*.xlsx
+*.xls
+*.csv
+*.dump

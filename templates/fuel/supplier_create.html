@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Yeni tedarikçi — Yakıt Operasyon{% endblock %}
+{% block header_title %}Yeni tanım{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="YENİ TEDARİKÇİ" heading_title="Yeni tedarikçi" heading_description="Yakıt girişlerinde seçilecek tedarikçi kaydını oluşturun." heading_back_url_name="supplier-list" %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form accent-green" novalidate>
+    {% csrf_token %}
+    <header class="definition-form-header"><span class="operation-kicker">TANIM BİLGİLERİ</span><h2>Tedarikçi detayları</h2></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid single">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><a class="button ghost" href="{% url 'supplier-list' %}">Vazgeç</a><button class="button primary" type="submit">Tedarikçiyi ekle</button></footer>
+  </form>
+  <aside class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><h3>Toplam otomatik hesaplanır</h3><p>Tedarikçiden yapılan geçerli yakıt girişleri bu kaydın toplam teslimatına otomatik eklenir.</p><small>İptal edilen hareketler toplam gelen miktara dahil edilmez.</small></aside>
+</div>
+{% endblock %}

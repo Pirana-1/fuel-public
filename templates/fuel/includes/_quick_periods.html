@@ -1,0 +1,5 @@
+<div class="quick-periods" aria-label="Hızlı tarih aralığı">
+  <button type="submit" name="period" value="today" class="period-chip {% if active_period == 'today' %}active{% endif %}">Bugün</button>
+  <button type="submit" name="period" value="7d" class="period-chip {% if active_period == '7d' %}active{% endif %}">Son 7 gün</button>
+  <button type="submit" name="period" value="30d" class="period-chip {% if active_period == '30d' %}active{% endif %}">Son 30 gün</button>
+</div>

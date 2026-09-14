@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Yakıt Operasyon{% endblock %}
+{% block header_title %}Yeni hareket{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="YENİ KAYIT" heading_title=title heading_description=subtitle heading_back_url_name="movement-list" heading_back_label="Hareketlere dön" heading_extra_class="operation-heading" %}
+<div class="operation-layout">
+  <form method="post" class="panel operation-form accent-{{ accent }}" novalidate>
+    {% csrf_token %}
+    <header class="operation-form-header">
+      <div><span class="operation-kicker">HAREKET BİLGİLERİ</span><h2>İşlem detayları</h2></div>
+    </header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid operation-fields {{ form_layout }}">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><a class="button ghost" href="{% url 'movement-list' %}">Vazgeç</a><button class="button primary" type="submit">Kaydı oluştur {% include "includes/icons.html" with name="arrow-right" %}</button></footer>
+  </form>
+  <aside class="operation-sidebar">
+    <section class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><span class="operation-kicker">{% if accent == 'green' %}STOK VE ALIŞ ETKİSİ{% else %}MUHASEBE ETKİSİ{% endif %}</span><h3>{% if accent == 'green' %}Stok ve alış tutarı{% else %}Stok etkisi{% endif %}</h3>
+      {% if note_text %}<p>{{ note_text }}</p>
+      {% elif accent == 'green' %}<p>Girilen miktar hedef sabit tankın stoğunu artırır; alış tutarı litre ile birim fiyat üzerinden hesaplanır.</p>
+      {% elif accent == 'blue' %}<p>Miktar kaynak sabit tanktan düşer, hedef mobil tankere eklenir. Toplam stok ve tüketim değişmez.</p>
+      {% elif accent == 'orange' %}<p>Miktar kaynak tank/tanker stoğundan düşer ve araç tüketimine eklenir.</p>
+      {% else %}<p>Başlangıç miktarı seçilen tank veya tankerin açılış stoğuna eklenir.</p>{% endif %}
+      <small>Tüm işlemler kullanıcı ve kayıt zamanı ile izlenir.</small>
+    </section>
+    <section class="operation-check panel"><span class="operation-kicker">KAYIT KONTROLÜ</span><strong>Kaydetmeden önce</strong><ul><li>{% if form.counted_stock %}Sayım tarihi ve saati doğru mu?{% else %}Tarih ve saat doğru mu?{% endif %}</li><li>{% if form.counted_stock %}Fiziksel sayım sonucu doğru mu?{% else %}Miktar litre cinsinden mi?{% endif %}</li>{% if accent == 'green' %}<li>Alış fiyatı ve irsaliye doğru mu?</li><li>Tedarikçi ve sabit tank doğru mu?</li>{% elif accent == 'blue' %}<li>Kaynak tank ve hedef tanker doğru mu?</li>{% elif accent == 'orange' %}<li>Tank/tanker ve araç doğru mu?</li>{% else %}<li>Seçilen tank veya tanker doğru mu?</li>{% endif %}</ul></section>
+  </aside>
+</div>
+{% if storage_status %}{{ storage_status|json_script:"operation-storage-status" }}{% endif %}
+{% if vehicle_meter_status %}{{ vehicle_meter_status|json_script:"vehicle-meter-status" }}{% endif %}
+{% endblock %}

@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-akaryakit}
+      POSTGRES_USER: ${POSTGRES_USER:-akaryakit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_change_me}
+    ports:
+      - "127.0.0.1:${DB_EXPOSE_PORT:-5433}:5432"
+    volumes:
+      - akaryakit_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-akaryakit} -d ${POSTGRES_DB:-akaryakit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  web:
+    build: .
+    restart: unless-stopped
+    # Geliştirmede bind mount izinleri için root; imaj varsayılanı non-root'tur.
+    user: "0:0"
+    # migrate/collectstatic artık docker-entrypoint.sh içinde;
+    # burada yalnızca uygulama sunucusu başlatılır.
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60
+    environment:
+      # Varsayılanlar bilinçli olarak güvenli: .env olmadan uygulama
+      # DEBUG=0 ile başlar ve SECRET_KEY yoksa hata verip durur.
+      DEBUG: ${DEBUG:-0}
+      SECRET_KEY: ${SECRET_KEY:-}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      POSTGRES_DB: ${POSTGRES_DB:-akaryakit}
+      POSTGRES_USER: ${POSTGRES_USER:-akaryakit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_change_me}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8000}:8000"
+    volumes:
+      - .:/app
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  akaryakit_postgres_data:
+

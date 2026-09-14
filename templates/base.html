@@ -1,0 +1,126 @@
+{% load static %}
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142a43">
+  <title>{% block title %}Yakıt Operasyon{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+</head>
+<body class="{% if not user.is_authenticated %}auth-body{% endif %}">
+{% if user.is_authenticated %}
+  <a class="skip-link" href="#main-content">İçeriğe atla</a>
+  <div class="app-shell">
+    <script>
+      try {
+        if (window.innerWidth > 900 && window.localStorage.getItem("akaryakit.sidebar.collapsed") === "true") {
+          document.currentScript.parentElement.classList.add("sidebar-collapsed");
+        }
+      } catch (_error) {
+        // Sidebar still starts expanded when browser storage is unavailable.
+      }
+    </script>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a class="brand" href="{% url 'dashboard' %}" aria-label="Ana sayfa">
+          <span class="brand-mark">YA</span>
+          <span><strong>Yakıt</strong><small>Operasyon Sistemi</small></span>
+        </a>
+        <button class="sidebar-collapse-toggle" type="button" aria-label="Menüyü daralt" aria-controls="sidebar" aria-expanded="true" title="Menüyü daralt">
+          {% include "includes/icons.html" with name="chevron-left" %}
+          <span class="sr-only">Menüyü daralt</span>
+        </button>
+      </div>
+
+      <nav class="nav" aria-label="Ana menü">
+        <div class="nav-section nav-section-primary">
+          <span class="nav-label">OPERASYON</span>
+          {% if perms.fuel.view_fuelmovement %}<a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <span class="nav-icon">{% include "includes/icons.html" with name="dashboard" %}</span><span>Gösterge paneli</span>
+          </a>{% endif %}
+          {% if perms.fuel.approve_fuelingrequest %}
+          <a href="{% url 'fueling-request-approval-list' %}" class="{% if request.resolver_match.url_name == 'fueling-request-approval-list' or request.resolver_match.url_name == 'fueling-request-reject' %}active{% endif %}">
+            <span class="nav-icon">{% include "includes/icons.html" with name="check" %}</span><span>Saha onayları</span>
+          </a>
+          {% endif %}
+          {% if perms.fuel.view_fuelmovement %}
+          <a href="{% url 'movement-list' %}" class="{% if request.resolver_match.url_name == 'movement-list' %}active{% endif %}">
+            <span class="nav-icon">{% include "includes/icons.html" with name="movements" %}</span><span>Yakıt hareketleri</span>
+          </a>
+          <a href="{% url 'reports' %}" class="{% if request.resolver_match.url_name == 'reports' %}active{% elif request.resolver_match.url_name == 'contractor-reports' %}has-active-child{% endif %}" title="Raporlar">
+            <span class="nav-icon">{% include "includes/icons.html" with name="reports" %}</span><span>Raporlar</span>
+          </a>
+          <a href="{% url 'contractor-reports' %}" class="nav-subitem {% if request.resolver_match.url_name == 'contractor-reports' %}active{% endif %}" title="Taşeron dolumları">
+            <span class="nav-icon orange">{% include "includes/icons.html" with name="clipboard" %}</span><span>Taşeron dolumları</span>
+          </a>
+          {% endif %}
+        </div>
+
+        {% if perms.fuel.add_fuelmovement or perms.fuel.change_fuelmovement or perms.fuel.add_fuelingrequest %}
+        <div class="nav-section nav-section-quick">
+          <span class="nav-label">HIZLI İŞLEMLER</span>
+          {% if perms.fuel.add_fuelmovement %}
+          <a href="{% url 'supplier-receipt-create' %}" class="{% if request.resolver_match.url_name == 'supplier-receipt-create' %}active{% endif %}"><span class="nav-icon green">{% include "includes/icons.html" with name="fuel-pump" %}</span><span>Yakıt girişi</span></a>
+          <a href="{% url 'internal-transfer-create' %}" class="{% if request.resolver_match.url_name == 'internal-transfer-create' %}active{% endif %}"><span class="nav-icon blue">{% include "includes/icons.html" with name="transfer" %}</span><span>Tankere transfer</span></a>
+          <a href="{% url 'vehicle-fueling-create' %}" class="{% if request.resolver_match.url_name == 'vehicle-fueling-create' %}active{% endif %}"><span class="nav-icon orange">{% include "includes/icons.html" with name="fuel-pump" %}</span><span>Araca yakıt ver</span></a>
+          {% endif %}
+          {% if perms.fuel.add_fuelingrequest %}<a href="{% url 'operator-fueling-request' %}" class="{% if request.resolver_match.url_name == 'operator-fueling-request' %}active{% endif %}"><span class="nav-icon orange">{% include "includes/icons.html" with name="clipboard" %}</span><span>Saha yakıt kaydı</span></a>{% endif %}
+          {% if perms.fuel.change_fuelmovement %}<a href="{% url 'stock-adjustment-create' %}" class="{% if request.resolver_match.url_name == 'stock-adjustment-create' %}active{% endif %}"><span class="nav-icon purple">{% include "includes/icons.html" with name="sliders" %}</span><span>Stok düzeltmesi</span></a>{% endif %}
+        </div>
+        {% endif %}
+
+        {% if perms.fuel.view_storageunit or perms.fuel.view_vehicle or perms.fuel.view_supplier or perms.fuel.view_region %}
+        <div class="nav-section">
+          <span class="nav-label">TANIMLAR</span>
+          {% if perms.fuel.view_storageunit %}<a href="{% url 'storage-list' %}" class="{% if request.resolver_match.url_name == 'storage-list' or request.resolver_match.url_name == 'storage-create' or request.resolver_match.url_name == 'storage-edit' or request.resolver_match.url_name == 'storage-region-change' %}active{% endif %}"><span class="nav-icon">{% include "includes/icons.html" with name="tank" %}</span><span>Tanklar ve tankerler</span></a>{% endif %}
+          {% if perms.fuel.view_vehicle %}<a href="{% url 'vehicle-list' %}" class="{% if request.resolver_match.url_name == 'vehicle-list' or request.resolver_match.url_name == 'vehicle-create' or request.resolver_match.url_name == 'vehicle-import' or request.resolver_match.url_name == 'vehicle-edit' or request.resolver_match.url_name == 'vehicle-region-change' %}active{% endif %}"><span class="nav-icon">{% include "includes/icons.html" with name="truck" %}</span><span>Araçlar</span></a>{% endif %}
+          {% if perms.fuel.view_supplier %}<a href="{% url 'supplier-list' %}" class="{% if request.resolver_match.url_name == 'supplier-list' or request.resolver_match.url_name == 'supplier-create' or request.resolver_match.url_name == 'supplier-edit' %}active{% endif %}"><span class="nav-icon">{% include "includes/icons.html" with name="suppliers" %}</span><span>Tedarikçiler</span></a>{% endif %}
+          {% if perms.fuel.view_region %}<a href="{% url 'region-list' %}" class="{% if request.resolver_match.url_name == 'region-list' or request.resolver_match.url_name == 'region-create' or request.resolver_match.url_name == 'region-edit' %}active{% endif %}"><span class="nav-icon">{% include "includes/icons.html" with name="regions" %}</span><span>Bölgeler</span></a>{% endif %}
+        </div>
+        {% endif %}
+
+        {% if user.is_superuser %}
+        <div class="nav-section">
+          <span class="nav-label">YÖNETİM</span>
+          <a href="{% url 'user-list' %}" class="{% if request.resolver_match.url_name == 'user-list' or request.resolver_match.url_name == 'user-create' or request.resolver_match.url_name == 'user-edit' or request.resolver_match.url_name == 'user-set-password' %}active{% endif %}"><span class="nav-icon">{% include "includes/icons.html" with name="users" %}</span><span>Kullanıcılar ve roller</span></a>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-user">
+        <span class="avatar">{{ user.get_username|slice:":1"|upper }}</span>
+        <span><strong>{{ user.get_full_name|default:user.get_username }}</strong><small>Aktif kullanıcı</small></span>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="icon-button" title="Çıkış yap" aria-label="Çıkış yap">{% include "includes/icons.html" with name="logout" %}</button>
+        </form>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <button class="menu-toggle" type="button" aria-label="Menüyü aç" aria-controls="sidebar" aria-expanded="false">{% include "includes/icons.html" with name="menu" size="lg" %}</button>
+        <div>
+          <span class="topbar-kicker">AKARYAKIT YÖNETİMİ</span>
+          <strong>{% block header_title %}Operasyon merkezi{% endblock %}</strong>
+        </div>
+      </header>
+
+      <main class="content" id="main-content">
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

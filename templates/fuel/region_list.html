@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Bölgeler — Yakıt Operasyon{% endblock %}
+{% block header_title %}Ana veriler{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><span class="eyebrow">TANIMLAR</span><h1>Bölgeler</h1><p>Tank, tanker ve araçların güncel operasyon bölgelerini yönetin.</p></div>
+  {% if can_add %}<a class="button primary" href="{% url 'region-create' %}">{% include "includes/icons.html" with name="plus" %} Yeni bölge</a>{% endif %}
+</section>
+<section class="panel master-list region-list-panel">
+  <div class="panel-heading"><div><span class="eyebrow">KAYITLAR</span><h2>Tanımlı bölgeler</h2></div><span class="count-pill">{{ page_obj.paginator.count }}</span></div>
+  {% include "includes/master_filters.html" with search_placeholder="Bölge adı veya kodu ara" %}
+  <div class="table-wrap region-table-wrap">
+    <table class="region-table">
+      <thead><tr><th>Bölge</th><th>Kod</th><th class="numeric">Aktif tank/tanker</th><th class="numeric">Aktif araç/makine</th><th>Durum</th><th class="region-actions-heading">İşlemler</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td class="region-name-cell"><strong>{{ item.name }}</strong></td>
+            <td>{{ item.code }}</td>
+            <td class="numeric"><strong>{{ item.active_storage_count }}</strong></td>
+            <td class="numeric"><strong>{{ item.active_vehicle_count }}</strong></td>
+            <td><span class="status {% if item.is_active %}active{% else %}passive{% endif %}">{% if item.is_active %}Aktif{% else %}Pasif{% endif %}</span></td>
+            <td class="region-actions-cell">
+              {% if perms.fuel.change_region %}
+                <div class="row-actions region-actions">
+                  <details class="row-action-menu">
+                    <summary aria-label="{{ item.name }} için işlemler">•••</summary>
+                    <div class="row-action-menu-panel">
+                      <a href="{% url 'region-edit' item.pk %}">Düzenle</a>
+                      <form method="post" action="{% url 'region-toggle' item.pk %}">{% csrf_token %}<button type="submit">{% if item.is_active %}Pasife al{% else %}Aktifleştir{% endif %}</button></form>
+                    </div>
+                  </details>
+                </div>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        {% empty %}<tr><td colspan="6" class="table-empty">Filtreye uygun bölge bulunamadı.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+</section>
+{% endblock %}

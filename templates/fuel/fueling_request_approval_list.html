@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load fuel_numbers %}
+{% block title %}Saha onayları — Yakıt Operasyon{% endblock %}
+{% block header_title %}Saha kayıt onayı{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><span class="eyebrow">ONAY MERKEZİ</span><h1>Saha yakıt kayıtları</h1><p>Operatörlerin gönderdiği dolumları kontrol edin; yalnızca onaylanan kayıtlar stok ve raporlara işlenir.</p></div>
+  <span class="pending-summary"><strong>{{ pending_count }}</strong> bekleyen kayıt</span>
+</section>
+
+<section class="panel approval-panel">
+  <form method="get" class="filter-bar approval-filter">
+    <div class="filter-heading"><div><span class="filter-kicker">FİLTRELE</span><strong>Onay listesini daralt</strong></div></div>
+    <div class="filter-fields">
+      <label class="filter-field"><span>Ara</span><input type="search" name="q" value="{{ filters.q }}" placeholder="Plaka, RFID, araç veya tanker"></label>
+      <label class="filter-field"><span>Operatör</span><select name="operator"><option value="">Tüm operatörler</option>{% for operator in operators %}<option value="{{ operator.pk }}" {% if filters.operator == operator.pk|stringformat:"s" %}selected{% endif %}>{{ operator.get_full_name|default:operator.username }}</option>{% endfor %}</select></label>
+      <label class="filter-field"><span>Kaynak bölge</span><select name="region"><option value="">Tüm bölgeler</option>{% for region in regions %}<option value="{{ region.pk }}" {% if filters.region == region.pk|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>{% endfor %}</select></label>
+      <label class="filter-field"><span>Durum</span><select name="status"><option value="all" {% if filters.status == 'all' %}selected{% endif %}>Tüm durumlar</option>{% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="filter-field"><span>Sayfa başına</span><select name="page_size">{% for option in page_size_options %}<option value="{{ option }}" {% if page_size == option %}selected{% endif %}>{{ option }} kayıt</option>{% endfor %}</select></label>
+      <div class="filter-actions"><button class="button secondary filter-submit" type="submit">Ara / filtrele</button><a class="button ghost filter-reset" href="{% url 'fueling-request-approval-list' %}">Temizle</a></div>
+    </div>
+  </form>
+
+  <form method="post" id="bulk-approval-form">
+    {% csrf_token %}
+    <div class="approval-bulk-bar">
+      <label class="bulk-select-control"><input type="checkbox" id="approval-select-all"> <span>Bu sayfadaki bekleyenlerin tümünü seç</span></label>
+      <button class="button primary" id="bulk-approve-button" type="submit" disabled><span id="bulk-approve-label">Seçilenleri onayla</span></button>
+    </div>
+    <div class="table-wrap approval-table-wrap">
+      <table class="approval-table">
+        <thead><tr><th class="select-column">Seç</th><th>Gönderim / operatör</th><th>Yakıt zamanı</th><th>Kaynak / bölge</th><th>Araç</th><th>Sayaç</th><th class="numeric">Miktar</th><th class="numeric">Fiyat</th><th>Durum / işlem</th></tr></thead>
+        <tbody>
+        {% for item in page_obj %}
+          <tr>
+            <td class="select-column">{% if item.status == 'PENDING' %}<input class="approval-row-checkbox" type="checkbox" name="request_ids" value="{{ item.pk }}" aria-label="{{ item.vehicle.code }} kaydını seç">{% else %}—{% endif %}</td>
+            <td><strong>{{ item.submitted_at|date:"d.m.Y H:i" }}</strong><span class="cell-subtitle">{{ item.submitted_by.get_full_name|default:item.submitted_by.username }}</span></td>
+            <td>{{ item.occurred_at|date:"d.m.Y H:i" }}</td>
+            <td><strong>{{ item.source_storage.name }}</strong><span class="cell-subtitle">{{ item.source_region.name }} · {{ item.source_storage.get_kind_display }}</span></td>
+            <td><strong>{{ item.vehicle.code }}</strong><span class="cell-subtitle">{{ item.vehicle.name }} · {{ item.vehicle_region.name }}{% if item.vehicle.is_contractor %} · Taşeron{% endif %}</span></td>
+            <td>{% if item.meter_value is not None %}{{ item.meter_value|number_tr }} {% if item.vehicle.meter_type == 'KM' %}km{% elif item.vehicle.meter_type == 'HOUR' %}saat{% endif %}{% else %}—{% endif %}</td>
+            <td class="numeric"><strong>{{ item.liters|liters_tr }} L</strong></td>
+            <td class="numeric">{% if item.vehicle.is_contractor and item.contractor_unit_price is not None %}<strong>{{ item.contractor_unit_price|number_tr:4 }} TL/L</strong><span class="cell-subtitle">Referans: {{ item.contractor_reference_unit_price|number_tr:4 }} TL/L</span>{% else %}—{% endif %}</td>
+            <td><span class="status {{ item.status|lower }}">{{ item.get_status_display }}</span>{% if item.status == 'PENDING' %}<details class="reject-details"><summary>Reddet</summary><textarea class="form-control" name="reason" form="reject-form-{{ item.pk }}" rows="2" minlength="3" required placeholder="Ret gerekçesi"></textarea><button class="button danger compact-button" type="submit" form="reject-form-{{ item.pk }}">Kaydı reddet</button></details>{% elif item.decision_reason %}<span class="cell-subtitle">{{ item.decision_reason }}</span>{% endif %}</td>
+          </tr>
+        {% empty %}<tr><td class="table-empty" colspan="9">Bu filtrelere uygun saha kaydı bulunamadı.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+  {% if bulk_confirm_requests %}
+  <section class="panel approval-confirm-panel">
+    <div class="panel-heading"><div><span class="eyebrow">ONAY ÖZETİ</span><h2>Seçilen kayıtlar</h2></div><span class="count-pill">{{ bulk_confirm_requests|length }}</span></div>
+    <p class="approval-confirm-note">Onayladığınızda bu kayıtlar stoğa ve raporlara işlenir. İşlem geri alınamaz; yanlış kaydı reddetmek için listedeki “Reddet” adımını kullanın.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Araç</th><th>Kaynak / bölge</th><th>Yakıt zamanı</th><th class="numeric">Miktar</th><th class="numeric">Yansıtma fiyatı</th></tr></thead>
+        <tbody>{% for item in bulk_confirm_requests %}<tr><td><strong>{{ item.vehicle.code }}</strong><span class="cell-subtitle">{{ item.vehicle.name }}</span></td><td>{{ item.source_storage.name }} · {{ item.source_region.name }}</td><td>{{ item.occurred_at|date:"d.m.Y H:i" }}</td><td class="numeric"><strong>{{ item.liters|liters_tr }} L</strong></td><td class="numeric">{% if item.vehicle.is_contractor and item.contractor_unit_price is not None %}<strong>{{ item.contractor_unit_price|number_tr:4 }} TL/L</strong>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    <form method="post" class="approval-confirm-actions">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="1">
+      {% for item in bulk_confirm_requests %}<input type="hidden" name="request_ids" value="{{ item.pk }}">{% endfor %}
+      <button class="button primary" type="submit">{{ bulk_confirm_requests|length }} kaydı onayla</button>
+      <a class="button ghost" href="{% url 'fueling-request-approval-list' %}">Vazgeç</a>
+    </form>
+  </section>
+  {% endif %}
+  {% include "includes/pagination.html" %}
+</section>
+{% for item in page_obj %}{% if item.status == 'PENDING' %}<form id="reject-form-{{ item.pk }}" method="post" action="{% url 'fueling-request-reject' item.pk %}">{% csrf_token %}</form>{% endif %}{% endfor %}
+{% endblock %}

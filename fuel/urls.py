@@ -1,0 +1,77 @@
+from django.urls import path
+
+from . import user_views, views
+
+
+urlpatterns = [
+    path("health/", views.health, name="health"),
+    path("", views.dashboard, name="dashboard"),
+    path("panel-ozeti/", views.dashboard_metrics, name="dashboard-metrics"),
+    path("hareketler/", views.movement_list, name="movement-list"),
+    path("hareketler/baslangic/", views.opening_balance_create, name="opening-balance-create"),
+    path("hareketler/tedarikci-girisi/", views.supplier_receipt_create, name="supplier-receipt-create"),
+    path("hareketler/transfer/", views.internal_transfer_create, name="internal-transfer-create"),
+    path("hareketler/arac-dolumu/", views.vehicle_fueling_create, name="vehicle-fueling-create"),
+    path("saha/yakit-kaydi/", views.operator_fueling_request, name="operator-fueling-request"),
+    path(
+        "yonetim/saha-kayitlari/",
+        views.fueling_request_approval_list,
+        name="fueling-request-approval-list",
+    ),
+    path(
+        "yonetim/saha-kayitlari/<int:pk>/reddet/",
+        views.fueling_request_reject,
+        name="fueling-request-reject",
+    ),
+    path("hareketler/stok-duzeltme/", views.stock_adjustment_create, name="stock-adjustment-create"),
+    path("hareketler/<int:pk>/iptal/", views.movement_void, name="movement-void"),
+    path("hareketler/<int:pk>/duzelt/", views.movement_correct, name="movement-correct"),
+    path("tanimlar/bolgeler/", views.region_list, name="region-list"),
+    path("tanimlar/bolgeler/yeni/", views.region_create, name="region-create"),
+    path("tanimlar/bolgeler/<int:pk>/duzenle/", views.region_edit, name="region-edit"),
+    path("tanimlar/bolgeler/<int:pk>/durum/", views.region_toggle, name="region-toggle"),
+    path("tanimlar/tedarikciler/", views.supplier_list, name="supplier-list"),
+    path("tanimlar/tedarikciler/yeni/", views.supplier_create, name="supplier-create"),
+    path("tanimlar/tedarikciler/<int:pk>/duzenle/", views.supplier_edit, name="supplier-edit"),
+    path("tanimlar/tedarikciler/<int:pk>/durum/", views.supplier_toggle, name="supplier-toggle"),
+    path("tanimlar/tanklar/", views.storage_list, name="storage-list"),
+    path("tanimlar/tanklar/yeni/", views.storage_create, name="storage-create"),
+    path("tanimlar/tanklar/<int:pk>/duzenle/", views.storage_edit, name="storage-edit"),
+    path(
+        "tanimlar/tanklar/<int:pk>/bolge-degistir/",
+        views.storage_region_change,
+        name="storage-region-change",
+    ),
+    path("tanimlar/tanklar/<int:pk>/durum/", views.storage_toggle, name="storage-toggle"),
+    path("tanimlar/araclar/", views.vehicle_list, name="vehicle-list"),
+    path("tanimlar/araclar/yeni/", views.vehicle_create, name="vehicle-create"),
+    path("tanimlar/araclar/ice-aktar/", views.vehicle_import, name="vehicle-import"),
+    path("tanimlar/araclar/<int:pk>/duzenle/", views.vehicle_edit, name="vehicle-edit"),
+    path(
+        "tanimlar/araclar/<int:pk>/bolge-degistir/",
+        views.vehicle_region_change,
+        name="vehicle-region-change",
+    ),
+    path("tanimlar/araclar/<int:pk>/durum/", views.vehicle_toggle, name="vehicle-toggle"),
+    path("raporlar/", views.reports, name="reports"),
+    path("raporlar/excel/", views.report_export_xlsx, name="report-export-xlsx"),
+    path("raporlar/taseron/", views.contractor_reports, name="contractor-reports"),
+    path(
+        "raporlar/taseron/fiyatlar/",
+        views.contractor_price_list,
+        name="contractor-price-list",
+    ),
+    path(
+        "raporlar/taseron/excel/",
+        views.contractor_report_export_xlsx,
+        name="contractor-report-export-xlsx",
+    ),
+    path("yonetim/kullanicilar/", user_views.user_list, name="user-list"),
+    path("yonetim/kullanicilar/yeni/", user_views.user_create, name="user-create"),
+    path("yonetim/kullanicilar/<int:pk>/", user_views.user_edit, name="user-edit"),
+    path(
+        "yonetim/kullanicilar/<int:pk>/parola/",
+        user_views.user_set_password,
+        name="user-set-password",
+    ),
+]

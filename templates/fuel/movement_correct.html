@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Hareketi düzelt — Yakıt Operasyon{% endblock %}
+{% block header_title %}Hareket düzeltme{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="DENETİMLİ DÜZELTME" heading_title="Hareketi düzelt" heading_description="Eski kayıt korunur ve düzeltilmiş yeni kayıtla ilişkilendirilir." heading_back_url_name="movement-list" heading_back_label="Hareketlere dön" %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form accent-purple" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="movement-summary">
+      <div><small>ESKİ HAREKET</small><strong>#{{ movement.pk }} · {{ movement.get_movement_type_display }}</strong></div>
+      <div><small>ESKİ MİKTAR</small><strong>{{ movement.liters|floatformat:3|intcomma }} L</strong></div>
+    </div>
+    <div class="form-grid">{% include "includes/form_fields.html" %}</div>
+    <div class="correction-reason">
+      {% for field in reason_form %}
+      <div class="field field-span">
+        <label for="{{ field.id_for_label }}">{{ field.label }}<span class="required">*</span></label>
+        {{ field }}
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <a class="button ghost" href="{% url 'movement-list' %}">Vazgeç</a>
+      <button class="button primary" type="submit">Düzeltmeyi kaydet {% include "includes/icons.html" with name="arrow-right" %}</button>
+    </div>
+  </form>
+  <aside class="form-note panel">
+    <span class="note-icon">{% include "includes/icons.html" with name="info" %}</span>
+    <h3>Kayıt geçmişi korunur</h3>
+    <p>Bu işlem eski hareketi değiştirmez veya silmez. Eski hareket “düzeltildi” olarak kapanır; yeni hareket stok ve raporlarda geçerli kayıt olur.</p>
+    <small>İşlemin tamamı tek adımda uygulanır. Stok veya sayaç kontrolü başarısız olursa hiçbir değişiklik kaydedilmez.</small>
+  </aside>
+</div>
+{% if vehicle_meter_status %}{{ vehicle_meter_status|json_script:"vehicle-meter-status" }}{% endif %}
+{{ contractor_price_definitions|default_if_none:"[]"|json_script:"contractor-price-definitions" }}
+{% endblock %}

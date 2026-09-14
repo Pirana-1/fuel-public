@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Yeni araç veya makine — Yakıt Operasyon{% endblock %}
+{% block header_title %}Yeni tanım{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="YENİ ARAÇ" heading_title="Yeni araç veya makine" heading_description="Aracın kimlik, sınıf, sayaç, açıklama ve başlangıç bölgesi bilgilerini tanımlayın." heading_back_url_name="vehicle-list" %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form accent-blue" novalidate>
+    {% csrf_token %}
+    <header class="definition-form-header"><span class="operation-kicker">TANIM BİLGİLERİ</span><h2>Araç/makine detayları</h2></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><a class="button ghost" href="{% url 'vehicle-list' %}">Vazgeç</a><button class="button primary" type="submit">Aracı ekle</button></footer>
+  </form>
+  <aside class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><h3>Sınıf ve sayaç ayrı bilgilerdir</h3><p>Taşeron seçimi aracın sınıfını belirtir; sayaç türü değildir. Taşeron araçlarda dolum sırasında kilometre veya çalışma saati istenmez.</p><small>Yakıt hareketi oluştuktan sonra sayaç türü kilitlenir. Bölge değişiklikleri ise listeden ayrı ve izlenebilir işlemle yapılır.</small></aside>
+</div>
+{% endblock %}

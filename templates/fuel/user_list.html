@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Kullanıcılar — Yakıt Operasyon{% endblock %}
+{% block header_title %}Kullanıcı yönetimi{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><span class="eyebrow">YÖNETİM</span><h1>Kullanıcılar ve roller</h1><p>Sisteme erişebilen hesapları, rollerini ve durumlarını yönetin.</p></div>
+  <a class="button primary" href="{% url 'user-create' %}">{% include "includes/icons.html" with name="plus" %} Yeni kullanıcı</a>
+</section>
+<section class="panel master-list user-list-panel">
+  <div class="panel-heading"><div><span class="eyebrow">HESAPLAR</span><h2>Tanımlı kullanıcılar</h2></div><span class="count-pill">{{ page_obj.paginator.count }}</span></div>
+  {% include "includes/master_filters.html" with search_placeholder="Kullanıcı, ad veya e-posta ara" %}
+  <div class="table-wrap user-table-wrap">
+    <table class="user-table">
+      <thead><tr><th>Kullanıcı</th><th>Ad soyad</th><th>Roller</th><th>Durum</th><th class="user-actions-heading">İşlemler</th></tr></thead>
+      <tbody>
+        {% for item in page_obj %}
+          <tr>
+            <td class="user-identity-cell"><strong>{{ item.username }}</strong><small class="cell-subtitle">{{ item.email|default:"—" }}</small></td>
+            <td>{{ item.get_full_name|default:"—" }}</td>
+            <td class="user-roles-cell">{% if item.is_superuser %}<span class="status corrected">Süper yönetici</span>{% endif %}{% for group in item.groups.all %}<small class="role-chip">{{ group.name }}</small>{% empty %}{% if not item.is_superuser %}<span class="muted-value">Rol yok</span>{% endif %}{% endfor %}</td>
+            <td><span class="status {% if item.is_active %}active{% else %}passive{% endif %}">{% if item.is_active %}Aktif{% else %}Pasif{% endif %}</span></td>
+            <td class="user-actions-cell">
+              <div class="row-actions user-actions">
+                <a class="user-edit-link" href="{% url 'user-edit' item.pk %}">Düzenle</a>
+                <details class="row-action-menu">
+                  <summary aria-label="{{ item.username }} için diğer işlemler">•••</summary>
+                  <div class="row-action-menu-panel"><a href="{% url 'user-set-password' item.pk %}">Parolayı yenile</a></div>
+                </details>
+              </div>
+            </td>
+          </tr>
+        {% empty %}<tr><td colspan="5" class="table-empty">Filtreye uygun kullanıcı bulunamadı.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+</section>
+{% endblock %}

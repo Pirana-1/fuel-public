@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load fuel_numbers %}
+{% block title %}Gösterge Paneli — Yakıt Operasyon{% endblock %}
+{% block header_title %}Gösterge paneli{% endblock %}
+{% block content %}
+<section class="page-heading dashboard-heading">
+  <div><span class="eyebrow">GÜNCEL OPERASYON ÖZETİ</span><h1>Yakıt durumuna genel bakış</h1><p>Stoklar hareket defterinden hesaplanır. Dönem toplamları seçtiğiniz tarih aralığına göre güncellenir.</p></div>
+  <form method="get" class="period-filter">
+    {% include "fuel/includes/_quick_periods.html" with active_period=period.period %}
+    <label for="dashboard-start">Başlangıç<input id="dashboard-start" type="date" name="start" value="{{ period.start }}"></label>
+    <label for="dashboard-end">Bitiş<input id="dashboard-end" type="date" name="end" value="{{ period.end }}"></label>
+    <button class="button secondary" type="submit">Dönemi uygula</button>
+  </form>
+</section>
+
+<div id="dashboard-metrics" class="dashboard-live" aria-live="polite" hx-get="{% url 'dashboard-metrics' %}?{{ request.GET.urlencode }}" hx-trigger="every 60s" hx-swap="innerHTML" hx-indicator="#dashboard-refresh-indicator">
+  {% include "fuel/includes/dashboard_live.html" %}
+</div>
+<span id="dashboard-refresh-indicator" class="htmx-indicator dashboard-refresh-indicator" role="status">Güncelleniyor…</span>
+{% endblock %}

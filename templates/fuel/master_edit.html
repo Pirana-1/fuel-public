@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Yakıt Operasyon{% endblock %}
+{% block header_title %}Tanım düzenleme{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="TANIM DÜZENLEME" heading_title=title heading_description=heading_description_expr heading_back_url_name=list_url_name %}
+<div class="form-layout">
+  <form method="post" class="panel operation-form accent-blue" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid">{% include "includes/form_fields.html" %}</div>
+    <div class="form-actions"><a class="button ghost" href="{% url list_url_name %}">Vazgeç</a><button class="button primary" type="submit">Değişiklikleri kaydet</button></div>
+  </form>
+  <aside class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><h3>Geçmiş kayıt güvenliği</h3><p>Hareket geçmişini değiştirecek tür, bölge ve sayaç alanları kullanımdan sonra kilitlenir.</p><small>Pasif kayıtlar geçmişte görünmeye devam eder fakat yeni işlemlerde seçilemez.</small></aside>
+</div>
+{% endblock %}

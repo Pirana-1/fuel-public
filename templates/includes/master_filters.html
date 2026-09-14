@@ -1,0 +1,25 @@
+<form method="get" class="master-filter">
+  <label>
+    <span class="sr-only">Ara</span>
+    <input type="search" name="q" value="{{ search_query }}" placeholder="{{ search_placeholder|default:'Ad, kod veya bölge ara' }}">
+  </label>
+  {% if regions %}
+    <label>
+      <span class="sr-only">Bölge</span>
+      <select name="region">
+        <option value="">Tüm bölgeler</option>
+        {% for region in regions %}<option value="{{ region.pk }}" {% if region_filter == region.pk|stringformat:'s' %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
+      </select>
+    </label>
+  {% endif %}
+  <label>
+    <span class="sr-only">Durum</span>
+    <select name="status">
+      <option value="">Tüm durumlar</option>
+      <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Aktif</option>
+      <option value="passive" {% if status_filter == 'passive' %}selected{% endif %}>Pasif</option>
+    </select>
+  </label>
+  <button class="button secondary" type="submit">Ara / filtrele</button>
+  {% if search_query or region_filter or status_filter %}<a class="button ghost" href="{{ request.path }}">Temizle</a>{% endif %}
+</form>

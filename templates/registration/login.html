@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Giriş — Yakıt Operasyon{% endblock %}
+{% block auth_content %}
+<main class="login-shell">
+  <form method="post" class="login-form panel" novalidate>
+    {% csrf_token %}
+    <div class="login-form-brand"><span class="brand-mark">YA</span><span><strong>Yakıt Operasyon</strong><small>Akaryakıt yönetimi</small></span></div>
+    <h1>Sisteme giriş</h1>
+    {% if form.non_field_errors %}<div class="form-alert">Kullanıcı adı veya parola hatalı.</div>{% endif %}
+    <label for="{{ form.username.id_for_label }}">Kullanıcı adı</label>
+    {{ form.username }}
+    <label for="{{ form.password.id_for_label }}">Parola</label>
+    {{ form.password }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button class="button primary wide" type="submit">Giriş yap</button>
+  </form>
+</main>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% load fuel_numbers %}
+<section class="metric-grid">
+  <article class="metric-card green"><span class="metric-icon">{% include "includes/icons.html" with name="arrow-down" size="lg" %}</span><div><small>DÖNEMDE GELEN</small><strong>{{ totals.received|liters_tr }} <em>L</em></strong><p>Tedarikçiden sabit tanklara</p></div></article>
+  <article class="metric-card navy"><span class="metric-icon">{% include "includes/icons.html" with name="tank" size="lg" %}</span><div><small>GÜNCEL SABİT TANK STOĞU</small><strong>{{ fixed_stock|liters_tr }} <em>L</em></strong><p>Tüm aktif sabit tanklar</p></div></article>
+  <article class="metric-card blue"><span class="metric-icon">{% include "includes/icons.html" with name="truck" size="lg" %}</span><div><small>GÜNCEL MOBİL TANKER STOĞU</small><strong>{{ mobile_stock|liters_tr }} <em>L</em></strong><p>Sahadaki mobil tankerler</p></div></article>
+  <article class="metric-card orange"><span class="metric-icon">{% include "includes/icons.html" with name="trending-up" size="lg" %}</span><div><small>DÖNEM TÜKETİMİ</small><strong>{{ totals.consumed|liters_tr }} <em>L</em></strong><p>Araç ve makinelere verilen</p></div></article>
+</section>
+
+<section class="summary-strip">
+  <div><small>GÜNCEL TOPLAM STOK</small><strong>{{ total_stock|liters_tr }} L</strong></div>
+  <div><small>DÖNEM İÇİ TRANSFER</small><strong>{{ totals.transferred|liters_tr }} L</strong></div>
+  <div class="{% if negative_stock_count %}warning-text{% endif %}"><small>EKSİ STOK</small><strong>{{ negative_stock_count }} birim</strong></div>
+  <div class="{% if low_stock_count %}warning-text{% endif %}"><small>DÜŞÜK STOK UYARISI</small><strong>{{ low_stock_count }} birim</strong></div>
+</section>

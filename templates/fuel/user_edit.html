@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Kullanıcıyı düzenle — Yakıt Operasyon{% endblock %}
+{% block header_title %}Kullanıcı yönetimi{% endblock %}
+{% block content %}
+<section class="page-heading compact"><div><span class="eyebrow">HESAP DÜZENLEME</span><h1>{{ edited_user.username }} kullanıcısını düzenle</h1><p>Kimlik bilgilerini, rolleri ve hesap durumunu güncelleyin.</p></div><div class="heading-actions"><a class="button secondary" href="{% url 'user-set-password' edited_user.pk %}">Parolayı yenile</a><a class="button ghost" href="{% url 'user-list' %}">{% include "includes/icons.html" with name="arrow-left" %} Kullanıcılara dön</a></div></section>
+<div class="form-layout user-form-layout">
+  <form method="post" class="panel operation-form accent-purple user-account-form" novalidate>
+    {% csrf_token %}
+    <header class="definition-form-header"><span class="operation-kicker">HESAP BİLGİLERİ</span><h2>Kullanıcı detayları</h2></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    {% include "fuel/includes/user_account_fields.html" %}
+    <footer class="form-actions"><a class="button ghost" href="{% url 'user-list' %}">Vazgeç</a><button class="button primary" type="submit">Değişiklikleri kaydet</button></footer>
+  </form>
+  <aside class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="info" %}</span><h3>Rol tabanlı yetki</h3><p>Rol değişiklikleri kullanıcının görebildiği ekranları ve yapabildiği işlemleri belirler.</p><small>Parola bu ekranda gösterilmez. Gerektiğinde üstteki ayrı parola yenileme işlemini kullanın.</small></aside>
+</div>
+{% endblock %}

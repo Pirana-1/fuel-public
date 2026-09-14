@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Araçlar — Yakıt Operasyon{% endblock %}
+{% block header_title %}Ana veriler{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><span class="eyebrow">TANIMLAR</span><h1>Araçlar ve makineler</h1><p>Plaka, RFID, araç sınıfı, sayaç türü, açıklama ve güncel bölge bilgilerini yönetin.</p></div>
+  {% if can_add %}<div class="heading-actions"><a class="button secondary" href="{% url 'vehicle-import' %}">Excel'den içe aktar</a><a class="button primary" href="{% url 'vehicle-create' %}">{% include "includes/icons.html" with name="plus" %} Yeni araç veya makine</a></div>{% endif %}
+</section>
+<section class="panel master-list vehicle-list-panel">
+  <div class="panel-heading"><div><span class="eyebrow">KAYITLAR</span><h2>Tanımlı araçlar</h2></div><span class="count-pill">{{ page_obj.paginator.count }}</span></div>
+  <form method="get" class="master-filter vehicle-filter">
+    <label>
+      <span class="sr-only">Ara</span>
+      <input type="search" name="q" value="{{ search_query }}" placeholder="{{ search_placeholder }}">
+    </label>
+    <label>
+      <span class="sr-only">Bölge</span>
+      <select name="region">
+        <option value="">Tüm bölgeler</option>
+        {% for region in regions %}<option value="{{ region.pk }}" {% if region_filter == region.pk|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="sr-only">Sayaç türü</span>
+      <select name="meter_type">
+        <option value="">Tüm sayaç türleri</option>
+        {% for value, label in meter_types %}<option value="{{ value }}" {% if meter_type_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="sr-only">Araç sınıfı</span>
+      <select name="vehicle_class">
+        <option value="">Tüm araç sınıfları</option>
+        {% for value, label in vehicle_classes %}<option value="{{ value }}" {% if vehicle_class_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="sr-only">Durum</span>
+      <select name="status">
+        <option value="">Tüm durumlar</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Aktif</option>
+        <option value="passive" {% if status_filter == 'passive' %}selected{% endif %}>Pasif</option>
+      </select>
+    </label>
+    <label>
+      <span class="sr-only">Sayfa başına kayıt</span>
+      <select name="page_size">
+        {% for value in page_size_options %}<option value="{{ value }}" {% if page_size == value %}selected{% endif %}>{{ value }} kayıt</option>{% endfor %}
+      </select>
+    </label>
+    <div class="vehicle-filter-actions">
+      <button class="button secondary" type="submit">Ara / filtrele</button>
+      {% if search_query or region_filter or meter_type_filter or vehicle_class_filter or status_filter or page_size != 50 %}<a class="button ghost" href="{{ request.path }}">Temizle</a>{% endif %}
+    </div>
+  </form>
+  <div class="table-wrap vehicle-table-wrap">
+    <table class="vehicle-table">
+      <thead><tr><th>Araç</th><th>RFID kodu</th><th>Bölge</th><th>Sınıf</th><th>Sayaç</th><th>Açıklama</th><th>Durum</th><th class="vehicle-actions-heading">İşlemler</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td class="vehicle-name-cell"><strong>{{ item.code }}</strong><small class="cell-subtitle">{{ item.name }}</small></td>
+            <td>{{ item.tag_code|default:"—" }}</td>
+            <td class="vehicle-region-cell">{{ item.region.name }}</td>
+            <td><span class="vehicle-class{% if item.is_contractor %} contractor{% endif %}">{% if item.is_contractor %}Taşeron{% else %}Kurum aracı{% endif %}</span></td>
+            <td>{{ item.get_meter_type_display }}</td>
+            <td>{{ item.organization|default:"—" }}</td>
+            <td><span class="status {% if item.is_active %}active{% else %}passive{% endif %}">{% if item.is_active %}Aktif{% else %}Pasif{% endif %}</span></td>
+            <td class="vehicle-actions-cell">
+              {% if perms.fuel.change_vehicle %}
+                <div class="row-actions vehicle-actions">
+                  <a class="region-change-link" href="{% url 'vehicle-region-change' item.pk %}">Bölge değiştir</a>
+                  <details class="row-action-menu">
+                    <summary aria-label="{{ item.code }} için diğer işlemler">•••</summary>
+                    <div class="row-action-menu-panel">
+                      <a href="{% url 'vehicle-edit' item.pk %}">Düzenle</a>
+                      <form method="post" action="{% url 'vehicle-toggle' item.pk %}">{% csrf_token %}<button type="submit">{% if item.is_active %}Pasife al{% else %}Aktifleştir{% endif %}</button></form>
+                    </div>
+                  </details>
+                </div>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        {% empty %}<tr><td colspan="8" class="table-empty">Filtreye uygun araç veya makine bulunamadı.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: akaryakit
+          POSTGRES_USER: akaryakit
+          POSTGRES_PASSWORD: ci-only-change-me
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U akaryakit -d akaryakit"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      # CI ortamı: sertleştirme kapalı, anahtar sabit ve yalnızca test amaçlı.
+      DEBUG: "1"
+      SECRET_KEY: ci-only-secret-key-not-used-in-production
+      POSTGRES_DB: akaryakit
+      POSTGRES_USER: akaryakit
+      POSTGRES_PASSWORD: ci-only-change-me
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: "5432"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Bağımlılıkları kur
+        run: pip install -r requirements.txt
+
+      - name: Model ve migration tutarlılığı
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Django kontrolleri
+        run: python manage.py check
+
+      - name: Testler
+        run: python manage.py test --noinput

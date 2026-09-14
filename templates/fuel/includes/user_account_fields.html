@@ -1,0 +1,62 @@
+<div class="user-form-sections">
+  <section class="user-form-section">
+    <header class="user-form-section-header"><span>01</span><div><h3>Kimlik bilgileri</h3><p>Kullanıcının giriş ve iletişim bilgileri.</p></div></header>
+    <div class="form-grid user-identity-grid">
+      {% for field in form %}
+        {% if field.name == 'username' or field.name == 'first_name' or field.name == 'last_name' or field.name == 'email' %}
+          <div class="field field-{{ field.name }}">
+            <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="help">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="user-form-section">
+    <header class="user-form-section-header"><span>02</span><div><h3>Yetki ve hesap durumu</h3><p>Birden fazla rol seçilebilir.</p></div></header>
+    <fieldset class="field user-role-field">
+      <legend class="field-label">{{ form.groups.label }}</legend>
+      {{ form.groups }}
+      {% if form.groups.help_text %}<small class="help">{{ form.groups.help_text }}</small>{% endif %}
+      {% for error in form.groups.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </fieldset>
+    <div class="field account-status-field">
+      <label class="account-status-control" for="{{ form.is_active.id_for_label }}">
+        {{ form.is_active }}
+        <span><strong>{{ form.is_active.label }}</strong><small>Kapalı hesaplar sisteme giriş yapamaz.</small></span>
+      </label>
+      {% for error in form.is_active.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </div>
+  </section>
+
+  <section class="user-form-section">
+    <header class="user-form-section-header"><span>03</span><div><h3>Saha erişimi</h3><p>Operatörün yakıt kaydı gönderebileceği tank ve tankerler.</p></div></header>
+    <fieldset class="field operator-storage-field">
+      <legend class="field-label">{{ form.operator_storages.label }}</legend>
+      {{ form.operator_storages }}
+      {% if form.operator_storages.help_text %}<small class="help">{{ form.operator_storages.help_text }}</small>{% endif %}
+      {% for error in form.operator_storages.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </fieldset>
+  </section>
+
+  {% if form.password1 %}
+    <section class="user-form-section">
+      <header class="user-form-section-header"><span>04</span><div><h3>İlk parola</h3><p>Kullanıcının ilk girişte kullanacağı güvenli parolayı belirleyin.</p></div></header>
+      <div class="form-grid user-password-grid">
+        {% for field in form %}
+          {% if field.name == 'password1' or field.name == 'password2' %}
+            <div class="field field-{{ field.name }}">
+              <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}</label>
+              {{ field }}
+              {% if field.help_text %}<small class="help password-help">{{ field.help_text }}</small>{% endif %}
+              {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Yeni kullanıcı — Yakıt Operasyon{% endblock %}
+{% block header_title %}Kullanıcı yönetimi{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="YENİ HESAP" heading_title="Yeni kullanıcı" heading_description="Kimlik bilgilerini, erişim rollerini ve ilk parolayı tanımlayın." heading_back_url_name="user-list" heading_back_label="Kullanıcılara dön" %}
+<div class="form-layout user-form-layout">
+  <form method="post" class="panel operation-form accent-purple user-account-form" novalidate>
+    {% csrf_token %}
+    <header class="definition-form-header"><span class="operation-kicker">HESAP BİLGİLERİ</span><h2>Kullanıcı detayları</h2></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    {% include "fuel/includes/user_account_fields.html" %}
+    <footer class="form-actions"><a class="button ghost" href="{% url 'user-list' %}">Vazgeç</a><button class="button primary" type="submit">Kullanıcı oluştur</button></footer>
+  </form>
+  <aside class="operation-sidebar">
+    <section class="form-note panel"><span class="note-icon">{% include "includes/icons.html" with name="users" %}</span><h3>Rol tabanlı erişim</h3><p>Rapor Görüntüleme yalnızca raporlara erişir. Veri Girişi operasyon kaydı oluşturur. Yönetici tanımları ve hareket düzeltmelerini de yönetir.</p><small>Süper yönetici yetkisi bu rol seçimlerinden bağımsızdır ve yalnızca teknik yönetim için kullanılmalıdır.</small></section>
+    <section class="operation-check panel"><span class="operation-kicker">KAYIT KONTROLÜ</span><strong>Oluşturmadan önce</strong><ul><li>Kullanıcı adı doğru mu?</li><li>Rol ihtiyaca uygun mu?</li><li>Parola güvenli biçimde paylaşılacak mı?</li></ul></section>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load fuel_numbers %}
+{% block title %}Taşeron fiyatları — Yakıt Operasyon{% endblock %}
+{% block header_title %}Taşeron fiyat yönetimi{% endblock %}
+{% block content %}
+{% include "fuel/includes/_page_heading.html" with heading_eyebrow="TAŞERON OPERASYONU" heading_title="Yakıt fiyat tanımları" heading_description="Dolum tarihine göre kullanılacak referans ortalama ve taşerona yansıtma fiyatlarını yönetin." heading_back_url_name="contractor-reports" heading_back_label="Taşeron raporuna dön" %}
+
+{% if current_price %}
+<section class="report-metrics contractor-price-current">
+  <div><small>GÜNCEL REFERANS</small><strong>{{ current_price.reference_unit_price|number_tr:4 }} TL/L</strong></div>
+  <div><small>TAŞERON FİYATI</small><strong>{{ current_price.contractor_unit_price|number_tr:4 }} TL/L</strong></div>
+  <div><small>BİRİM FARK</small><strong>{{ current_price.unit_difference|number_tr:4 }} TL/L</strong></div>
+</section>
+{% else %}
+<div class="form-alert">Henüz geçerli bir taşeron fiyatı yok. Taşeron dolumu kaydedebilmek için önce fiyat tanımlayın.</div>
+{% endif %}
+
+<div class="contractor-price-layout{% if not can_add %} view-only{% endif %}">
+  {% if can_add %}
+  <form method="post" class="panel operation-form contractor-price-form" novalidate>
+    {% csrf_token %}
+    <header class="operation-form-header"><div><span class="operation-kicker">YENİ DÖNEM</span><h2>Fiyat tanımla</h2></div></header>
+    {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+    <div class="form-grid operation-fields">{% include "includes/form_fields.html" %}</div>
+    <footer class="form-actions"><button class="button primary" type="submit">Fiyatı kaydet {% include "includes/icons.html" with name="arrow-right" %}</button></footer>
+  </form>
+  {% endif %}
+
+  <section class="panel contractor-price-history">
+    <header class="panel-heading"><div><span class="eyebrow">FİYAT GEÇMİŞİ</span><h2>Geçerlilik dönemleri</h2></div><span class="count-pill">{{ prices|length }}</span></header>
+    <div class="table-wrap"><table><thead><tr><th>Geçerlilik başlangıcı</th><th class="numeric">Referans ortalama</th><th class="numeric">Taşeron fiyatı</th><th class="numeric">Birim fark</th><th>Kaydı oluşturan</th><th>Açıklama</th></tr></thead><tbody>
+      {% for price in prices %}<tr><td><strong>{{ price.effective_from|date:"d.m.Y H:i" }}</strong>{% if price == current_price %}<small class="cell-subtitle success-text">Şu anda geçerli</small>{% endif %}</td><td class="numeric">{{ price.reference_unit_price|number_tr:4 }} TL/L</td><td class="numeric"><strong>{{ price.contractor_unit_price|number_tr:4 }} TL/L</strong></td><td class="numeric">{{ price.unit_difference|number_tr:4 }} TL/L</td><td>{{ price.created_by.get_username }}<small class="cell-subtitle">{{ price.created_at|date:"d.m.Y H:i" }}</small></td><td>{{ price.note|default:"—" }}</td></tr>{% empty %}<tr><td colspan="6" class="table-empty">Henüz fiyat tanımı bulunmuyor.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</div>
+{% endblock %}
